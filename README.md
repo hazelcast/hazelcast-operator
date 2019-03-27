@@ -16,7 +16,11 @@ Below are the steps to start a Hazelcast Enterprise cluster using Operator Frame
 
 Run the following commands to configure the Operator permissions.
 
-    kubectl apply -f rbac.yaml
+    kubectl apply -f operator-rbac.yaml
+
+Run the following commands to configure the Hazelcast cluster permissions.
+
+    kubectl apply -f hazelcast-rbac.yaml
 
 #### Step 2: Create CRD (Custom Resource Definition)
 
@@ -85,11 +89,17 @@ To create a new project, run the following command.
 
 Run the following commands to configure the Operator permissions.
 
-    # Additional step that may be needed
+    # Additional step needed for OpenShift
     oc adm policy add-scc-to-user hostnetwork -z default
      
     # Configure RBAC
-    oc apply -f rbac.yaml
+    oc apply -f operator-rbac.yaml
+
+Run the following commands to configure the Hazelcast cluster permissions.
+
+    oc apply -f hazelcast-rbac.yaml
+    # Additional step needed for OpenShift
+    oc adm policy add-scc-to-user anyuid -z hazelcast
 
 #### Step 2: Create CRD (Custom Resource Definition)
 
@@ -109,7 +119,6 @@ Deploy Hazelcast Enterprise Operator with the following command.
 Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
 
     oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
-
 
 Then, start Hazelcast cluster with the following command.
 
@@ -169,6 +178,9 @@ Then, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGrou
         tag: "3.11.2"
       hazelcast:
         licenseKeySecretName: "hz-license-key-secret"
+      serviceAccount:
+        create: false
+        name: hazelcast
       securityContext:
         runAsUser: 1000160000
         fsGroup: 1000160000

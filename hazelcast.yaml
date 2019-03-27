@@ -4,9 +4,9 @@ metadata:
   name: hz
 spec:
   image:
-    tag: "3.11.2"
+    tag: 3.11.2
   hazelcast:
-    licenseKeySecretName: "hz-license-key-secret"
-  securityContext:
-    runAsUser: 65534
-    fsGroup: 65534
+    licenseKeySecretName: hz-license-key-secret
+    serviceAccount:
+      create: false
+      name: hazelcast
