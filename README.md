@@ -160,7 +160,7 @@ Kubernetes/OpenShift clusters are deployed in many different ways and you may en
 
 #### Invalid value runAsUser
 
-Some of the Kubernetes/OpenShift environments may have the restriction on the User ID used for the container.
+Some of the OpenShift environments may have the restriction on the User ID used for the container.
 
     $ oc describe statefulsets/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise
     Warning  FailedCreate  28m (x13 over 28m)  statefulset-controller  create Pod my-hz-a2rqj3ai7p1ircbl9u7rr5riv-hazelcast-enterprise-0 in StatefulSet my-hz-a2rqj3ai7p1i
@@ -185,6 +185,8 @@ Then, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGrou
         runAsUser: 1000160000
         fsGroup: 1000160000
 
+Note: You can find the current UID range for your project with the following command `oc describe project <project-name> | grep openshift.io/sa.scc.uid-range`.
+
 #### Invalid value: must be no more than 63 characters
 
 In the sample `hazelcast.yaml`, the name of the Hazelcast cluster is `hz`. If you make this value longer, you may encounter the following error.
@@ -195,3 +197,37 @@ In the sample `hazelcast.yaml`, the name of the Hazelcast cluster is `hz`. If yo
     
 This is the issue of the Operator itself, so there is not better solution for now than giving your cluster a short name.
 
+#### WriteNotAllowedException in Management Center
+
+Some of the OpenShift environments may have the restriction on the User ID used in volume mounts, which may cause the following exception in Management Center.
+
+    Caused by: com.hazelcast.webmonitor.service.exception.WriteNotAllowedException: WARNING: /data can not be created. Either make it writable, or set "hazelcast.mancenter.
+    home" system property to a writable directory and restart.
+            at com.hazelcast.webmonitor.service.HomeDirectoryProviderImpl.constructDirectory(HomeDirectoryProviderImpl.java:63)
+            at com.hazelcast.webmonitor.service.HomeDirectoryProviderImpl.<init>(HomeDirectoryProviderImpl.java:25)
+            at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+            at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+            at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+            at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+            at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:142)
+            ... 66 common frames omitted
+
+In such case, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGroup` values.
+
+    apiVersion: hazelcast.com/v1alpha1
+    kind: Hazelcast
+    metadata:
+      name: hz
+    spec:
+      image:
+        tag: "3.11.2"
+      hazelcast:
+        licenseKeySecretName: "hz-license-key-secret"
+      serviceAccount:
+        create: false
+        name: hazelcast
+      securityContext:
+        runAsUser: 1000160000
+        fsGroup: 1000160000
+
+Note: You can find the UID range for your project with the following command `oc describe project <project-name> | grep openshift.io/sa.scc.uid-range`.

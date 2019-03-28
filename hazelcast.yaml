@@ -7,6 +7,6 @@ spec:
     tag: 3.11.2
   hazelcast:
     licenseKeySecretName: hz-license-key-secret
-    serviceAccount:
-      create: false
-      name: hazelcast
+  serviceAccount:
+    create: false
+    name: hazelcast
