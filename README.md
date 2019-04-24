@@ -154,6 +154,21 @@ To connect to Management Center, you can use `EXTERNAL-IP` and open your browser
 
 ![Management Center](markdown/management-center.png)
 
+## Configuration
+
+You may want to modify the behavior of the Hazelcast Operator.
+
+#### Changing Hazelcast and Management Center version
+
+If you want to modify the Hazelcast or Management Center version, update the following part in `hazelcast.yaml`.
+
+    spec:
+      image:
+        tag: <hazelcast-version>
+      mancenter:
+        image:
+          tag: <management-center-version>
+
 ## Troubleshooting
 
 Kubernetes/OpenShift clusters are deployed in many different ways and you may encounter some of the following issues in some environments.
