@@ -3,8 +3,6 @@ kind: Hazelcast
 metadata:
   name: hz
 spec:
-  image:
-    tag: 3.11.2
   hazelcast:
     licenseKeySecretName: hz-license-key-secret
   serviceAccount:
