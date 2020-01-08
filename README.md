@@ -5,75 +5,8 @@ Hazelcast Enterprise is packaged with [Operator Framework](https://github.com/op
 ## Prerequisites
 
 You must have one of the followings:
- * Kubernetes cluster (with admin rights) and the `kubectl` command configured (you may use [Minikube](https://kubernetes.io/docs/getting-started-guides/minikube/))
  * OpenShift cluster (with admin rights) and the `oc` command configured (you may use [Minishift](https://github.com/minishift/minishift))
-
-## Kubernetes Deployment steps
-
-Below are the steps to start a Hazelcast Enterprise cluster using Operator Framework. Note that the first 3 steps are usually performed only once for the Kubernetes cluster (by the cluster admin). The step 4 is performed each time you want to create a new Hazelcast cluster.
-
-#### Step 1: Create RBAC
-
-Run the following commands to configure the Operator permissions.
-
-    kubectl apply -f operator-rbac.yaml
-
-Run the following commands to configure the Hazelcast cluster permissions.
-
-    kubectl apply -f hazelcast-rbac.yaml
-
-#### Step 2: Create CRD (Custom Resource Definition)
-
-To create the Hazelcast resource definition, run the following command.
-
-    kubectl apply -f hazelcastcluster.crd.yaml
-
-#### Step 3: Deploy Hazelcast Operator
-
-Deploy Hazelcast Enterprise Operator with the following command.
-
-    kubectl apply -f operator.yaml
-
-#### Step 4: Start Hazelcast
-
-Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
-
-    kubectl create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
-
-Then, start Hazelcast cluster with the following command.
-
-    kubectl apply -f hazelcast.yaml
-
-Your Hazelcast Enterprise cluster (together with Management Center) should be created.
-
-    $ kubectl get all
-    NAME                                                                  READY   STATUS    RESTARTS   AGE
-    pod/hazelcast-operator-79468c667-lz96b                                1/1     Running   0          6m
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-0               1/1     Running   0          1m
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-1               1/1     Running   0          54s
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancentemqns5   1/1     Running   0          1m
-    
-    NAME                                                                  TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)          AGE
-    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise             ClusterIP      10.19.244.179   <none>           5701/TCP         1m
-    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   LoadBalancer   10.19.240.2     35.184.181.188   8080:31383/TCP   1m
-    service/kubernetes                                                    ClusterIP      10.19.240.1     <none>           443/TCP          39m
-    
-    NAME                                                                          DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-    deployment.apps/hazelcast-operator                                            1         1         1            1           6m
-    deployment.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   1         1         1            1           1m
-    
-    NAME                                                                                     DESIRED   CURRENT   READY   AGE
-    replicaset.apps/hazelcast-operator-79468c667                                             1         1         1       6m
-    replicaset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter-757cb7cd88   1         1         1       1m
-    
-    NAME                                                                 DESIRED   CURRENT   AGE
-    statefulset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise   2         2         1m
-
-**Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
-
-To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your Kubernetes environment does not have Load Balancer configured, then please use `NodePort` or `Ingress`.
-
-![Management Center](markdown/management-center.png)
+ * Kubernetes cluster (with admin rights) and the `kubectl` command configured (you may use [Minikube](https://kubernetes.io/docs/getting-started-guides/minikube/))
 
 ## OpenShift Deployment steps
 
@@ -150,7 +83,74 @@ Your Hazelcast Enterprise cluster (together with Management Center) should be cr
 
 **Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
 
-To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then please use `NodePort` or `Ingress`.
+To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then you can either use `NodePort` or create a route to Management Center with `oc expose`.
+
+![Management Center](markdown/management-center.png)
+
+## Kubernetes Deployment steps
+
+Below are the steps to start a Hazelcast Enterprise cluster using Operator Framework. Note that the first 3 steps are usually performed only once for the Kubernetes cluster (by the cluster admin). The step 4 is performed each time you want to create a new Hazelcast cluster.
+
+#### Step 1: Create RBAC
+
+Run the following commands to configure the Operator permissions.
+
+    kubectl apply -f operator-rbac.yaml
+
+Run the following commands to configure the Hazelcast cluster permissions.
+
+    kubectl apply -f hazelcast-rbac.yaml
+
+#### Step 2: Create CRD (Custom Resource Definition)
+
+To create the Hazelcast resource definition, run the following command.
+
+    kubectl apply -f hazelcastcluster.crd.yaml
+
+#### Step 3: Deploy Hazelcast Operator
+
+Deploy Hazelcast Enterprise Operator with the following command.
+
+    kubectl apply -f operator.yaml
+
+#### Step 4: Start Hazelcast
+
+Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
+
+    kubectl create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
+
+Then, start Hazelcast cluster with the following command.
+
+    kubectl apply -f hazelcast.yaml
+
+Your Hazelcast Enterprise cluster (together with Management Center) should be created.
+
+    $ kubectl get all
+    NAME                                                                  READY   STATUS    RESTARTS   AGE
+    pod/hazelcast-operator-79468c667-lz96b                                1/1     Running   0          6m
+    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-0               1/1     Running   0          1m
+    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-1               1/1     Running   0          54s
+    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancentemqns5   1/1     Running   0          1m
+    
+    NAME                                                                  TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)          AGE
+    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise             ClusterIP      10.19.244.179   <none>           5701/TCP         1m
+    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   LoadBalancer   10.19.240.2     35.184.181.188   8080:31383/TCP   1m
+    service/kubernetes                                                    ClusterIP      10.19.240.1     <none>           443/TCP          39m
+    
+    NAME                                                                          DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/hazelcast-operator                                            1         1         1            1           6m
+    deployment.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   1         1         1            1           1m
+    
+    NAME                                                                                     DESIRED   CURRENT   READY   AGE
+    replicaset.apps/hazelcast-operator-79468c667                                             1         1         1       6m
+    replicaset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter-757cb7cd88   1         1         1       1m
+    
+    NAME                                                                 DESIRED   CURRENT   AGE
+    statefulset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise   2         2         1m
+
+**Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
+
+To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your Kubernetes environment does not have Load Balancer configured, then please use `NodePort` or `Ingress`.
 
 ![Management Center](markdown/management-center.png)
 
