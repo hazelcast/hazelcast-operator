@@ -12,6 +12,11 @@ You must have one of the followings:
 
 Below are the steps to start a Hazelcast Enterprise cluster using Operator Framework. Note that the first 3 steps are usually performed only once for the OpenShift cluster/project (usually by the cluster admin). The step 4 is performed each time you want to create a new Hazelcast cluster.
 
+Note: You need to clone this repository before following the next steps.
+
+    git clone https://github.com/hazelcast/hazelcast-operator.git
+    cd hazelcast-operator
+
 #### Step 0: Create project
 
 To create a new project, run the following command.
@@ -90,6 +95,11 @@ To connect to Management Center, you can use `EXTERNAL-IP` and open your browser
 ## Kubernetes Deployment steps
 
 Below are the steps to start a Hazelcast Enterprise cluster using Operator Framework. Note that the first 3 steps are usually performed only once for the Kubernetes cluster (by the cluster admin). The step 4 is performed each time you want to create a new Hazelcast cluster.
+
+Note: You need to clone this repository before following the next steps.
+
+    git clone https://github.com/hazelcast/hazelcast-operator.git
+    cd hazelcast-operator
 
 #### Step 1: Create RBAC
 
