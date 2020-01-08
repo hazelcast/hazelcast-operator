@@ -83,7 +83,7 @@ Your Hazelcast Enterprise cluster (together with Management Center) should be cr
 
 **Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
 
-To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then please use `NodePort` or `Ingress`.
+To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then you can either use `NodePort` or create a route to Management Center with `oc expose`.
 
 ![Management Center](markdown/management-center.png)
 
