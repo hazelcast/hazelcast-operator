@@ -5,6 +5,3 @@ metadata:
 spec:
   hazelcast:
     licenseKeySecretName: hz-license-key-secret
-  serviceAccount:
-    create: false
-    name: hazelcast

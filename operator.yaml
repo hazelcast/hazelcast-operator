@@ -28,3 +28,9 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "hazelcast-operator"
+            - name: SERVICE_ACCOUNT_NAME
+              value: hazelcast
+            - name: HAZELCAST_IMAGE
+              value: hazelcast/hazelcast-enterprise:3.12.5
+            - name: MANCENTER_IMAGE
+              value: hazelcast/management-center:3.12.6
