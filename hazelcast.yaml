@@ -79,6 +79,9 @@ spec:
         nodeSelectorTerms:
         - matchExpressions:
           - key: beta.kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
   # The commented out example below shows how you could ensure your hazelcast pods are scheduled on different Kubernetes nodes
   #  podAntiAffinity:
   #    requiredDuringSchedulingIgnoredDuringExecution:
@@ -280,6 +283,9 @@ spec:
           nodeSelectorTerms:
           - matchExpressions:
             - key: beta.kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
 
     # tolerations enable Management Center POD to be able to run on nodes with taints
     # tolerations:

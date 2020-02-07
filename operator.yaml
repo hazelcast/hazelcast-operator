@@ -23,12 +23,19 @@ spec:
         productVersion: 0.1.1
     spec:
       serviceAccountName: hazelcast-operator
+      securityContext:
+        capabilities:
+          drop:
+          - ALL
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
               - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
       containers:
         - name: hazelcast-operator
           image: hazelcast/hazelcast-operator:0.1.1
@@ -47,7 +54,7 @@ spec:
             - name: SERVICE_ACCOUNT_NAME
               value: hazelcast
             - name: RELATED_IMAGE_HAZELCAST
-              value: hazelcast/hazelcast-enterprise:3.12.5
+              value: hazelcast/hazelcast-enterprise:3.12.6
             - name: RELATED_IMAGE_MANCENTER
               value: hazelcast/management-center:3.12.6
           resources:
@@ -65,7 +72,3 @@ spec:
             httpGet:
               path: /
               port: http
-        securityContext:
-          capabilities:
-            drop:
-            - ALL

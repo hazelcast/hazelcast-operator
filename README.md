@@ -52,6 +52,17 @@ Deploy Hazelcast Enterprise Operator with the following command.
 
     oc apply -f operator.yaml
 
+#### Step 4: Create Secret with Hazelcast License Key
+
+Base encode your license key.
+
+    $ echo -n "<hazelcast-license-key>" | base64
+    VU5MSU1JVEVEX0xJQ0VOU0UjOTlOb2RlcyMxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcnN0d3kxMjM0NTY3ODkxMjM0NTY3ODkxMTExMTExMTExMTE=
+
+Insert this value into `secret.yaml`, replace `<base64-hz-license-key>`. Then, create the secret.
+
+    oc apply -f secret.yaml
+
 #### Step 4: Start Hazelcast
 
 Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
