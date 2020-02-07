@@ -2,17 +2,33 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelast-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: hazelcast-operator
+      app.kubernetes.io/name: hazelcast-operator
   template:
     metadata:
       labels:
-        name: hazelcast-operator
+        app.kubernetes.io/name: hazelcast-operator
+        app.kubernetes.io/instance: hazelcast-operator
+        app.kubernetes.io/managed-by: hazelcast-operator
+      annotations:
+        productID: hazelcast-operator
+        productName: Hazelcast Operator
+        productVersion: 0.1.1
     spec:
       serviceAccountName: hazelcast-operator
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
       containers:
         - name: hazelcast-operator
           image: hazelcast/hazelcast-operator:0.1.1
@@ -34,3 +50,22 @@ spec:
               value: hazelcast/hazelcast-enterprise:3.12.5
             - name: RELATED_IMAGE_MANCENTER
               value: hazelcast/management-center:3.12.6
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: "0.5"
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
