@@ -20,7 +20,7 @@ spec:
       annotations:
         productID: hazelcast-operator
         productName: Hazelcast Operator
-        productVersion: 0.1.1
+        productVersion: 0.1.2
     spec:
       serviceAccountName: hazelcast-operator
       securityContext:
@@ -64,11 +64,3 @@ spec:
             requests:
               cpu: "0.5"
               memory: 256Mi
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
