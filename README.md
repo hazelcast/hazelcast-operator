@@ -54,7 +54,7 @@ Deploy Hazelcast Enterprise Operator with the following command.
 
 #### Step 4: Create Secret with Hazelcast License Key
 
-Base encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
+Use base64 to encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
 
     $ echo -n "<hazelcast-license-key>" | base64
     VU5MSU1JVEVEX0xJQ0VOU0UjOTlOb2RlcyMxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcnN0d3kxMjM0NTY3ODkxMjM0NTY3ODkxMTExMTExMTExMTE=
@@ -133,7 +133,7 @@ Deploy Hazelcast Enterprise Operator with the following command.
 
 #### Step 4: Create Secret with Hazelcast License Key
 
-Base encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
+Use base64 to encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
 
     $ echo -n "<hazelcast-license-key>" | base64
     VU5MSU1JVEVEX0xJQ0VOU0UjOTlOb2RlcyMxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcnN0d3kxMjM0NTY3ODkxMjM0NTY3ODkxMTExMTExMTExMTE=
