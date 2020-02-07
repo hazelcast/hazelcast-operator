@@ -52,39 +52,47 @@ Deploy Hazelcast Enterprise Operator with the following command.
 
     oc apply -f operator.yaml
 
-#### Step 4: Start Hazelcast
+#### Step 4: Create Secret with Hazelcast License Key
 
-Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
+Use base64 to encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
 
-    oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
+    $ echo -n "<hazelcast-license-key>" | base64
+    VU5MSU1JVEVEX0xJQ0VOU0UjOTlOb2RlcyMxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcnN0d3kxMjM0NTY3ODkxMjM0NTY3ODkxMTExMTExMTExMTE=
 
-Then, start Hazelcast cluster with the following command.
+Insert this value into `secret.yaml`, replace `<base64-hz-license-key>`. Then, create the secret.
+
+    oc apply -f secret.yaml
+
+#### Step 5: Start Hazelcast
+
+Start Hazelcast cluster with the following command.
 
     oc apply -f hazelcast.yaml
 
 Your Hazelcast Enterprise cluster (together with Management Center) should be created.
 
     $ oc get all
-    NAME                                                                    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-    deploy/hazelcast-operator                                               1         1         1            1           43m
-    deploy/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-mancenter   1         1         1            1           40m
-     
-    NAME                                                                           DESIRED   CURRENT   READY     AGE
-    rs/hazelcast-operator-9996757f6                                                1         1         1         43m
-    rs/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-mancenter-6b9f957d9d   1         1         1         40m
-     
-    NAME                                                                DESIRED   CURRENT   AGE
-    statefulsets/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise   2         2         40m
-     
-    NAME                                                                 READY     STATUS    RESTARTS   AGE
-    po/hazelcast-operator-9996757f6-6z7nq                                1/1       Running   0          43m
-    po/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-0            1/1       Running   0          40m
-    po/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-1            1/1       Running   0          39m
-    po/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-mance8vtj4   1/1       Running   0          40m
-     
-    NAME                                                                 TYPE           CLUSTER-IP      EXTERNAL-IP                     PORT(S)          AGE
-    svc/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise             ClusterIP      172.30.87.11    <none>                          5701/TCP         40m
-    svc/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise-mancenter   LoadBalancer   172.30.78.141   172.29.250.171,172.29.250.171   8080:30658/TCP   40m
+    NAME                        DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+    deploy/hazelcast-operator   1         1         1            0           9m
+
+    NAME                              DESIRED   CURRENT   READY     AGE
+    rs/hazelcast-operator-b48448568   1         1         0         9m
+
+    NAME                                                    DESIRED   CURRENT   AGE
+    statefulsets/hazelcast-hazelcast-enterprise             3         3         6m
+    statefulsets/hazelcast-hazelcast-enterprise-mancenter   1         1         6m
+
+    NAME                                            READY     STATUS    RESTARTS   AGE
+    po/hazelcast-hazelcast-enterprise-0             1/1       Running   0          6m
+    po/hazelcast-hazelcast-enterprise-1             1/1       Running   0          5m
+    po/hazelcast-hazelcast-enterprise-2             1/1       Running   0          5m
+    po/hazelcast-hazelcast-enterprise-mancenter-0   1/1       Running   0          6m
+    po/hazelcast-operator-b48448568-qw4rt           0/1       Running   0          9m
+
+    NAME                                           TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                        AGE
+    svc/hazelcast-hazelcast-enterprise             ClusterIP      None            <none>        5701/TCP                       6m
+    svc/hazelcast-hazelcast-enterprise-mancenter   LoadBalancer   172.30.110.3    <pending>     8080:30006/TCP,443:30007/TCP   6m
+    svc/hazelcast-operator-metrics                 ClusterIP      172.30.98.237   <none>        8686/TCP,8383/TCP              8m
 
 **Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
 
@@ -123,13 +131,20 @@ Deploy Hazelcast Enterprise Operator with the following command.
 
     kubectl apply -f operator.yaml
 
-#### Step 4: Start Hazelcast
+#### Step 4: Create Secret with Hazelcast License Key
 
-Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
+Use base64 to encode your Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
 
-    kubectl create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
+    $ echo -n "<hazelcast-license-key>" | base64
+    VU5MSU1JVEVEX0xJQ0VOU0UjOTlOb2RlcyMxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcnN0d3kxMjM0NTY3ODkxMjM0NTY3ODkxMTExMTExMTExMTE=
 
-Then, start Hazelcast cluster with the following command.
+Insert this value into `secret.yaml`, replace `<base64-hz-license-key>`. Then, create the secret.
+
+    kubectl apply -f secret.yaml
+
+#### Step 5: Start Hazelcast
+
+Start Hazelcast cluster with the following command.
 
     kubectl apply -f hazelcast.yaml
 
@@ -138,25 +153,25 @@ Your Hazelcast Enterprise cluster (together with Management Center) should be cr
     $ kubectl get all
     NAME                                                                  READY   STATUS    RESTARTS   AGE
     pod/hazelcast-operator-79468c667-lz96b                                1/1     Running   0          6m
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-0               1/1     Running   0          1m
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-1               1/1     Running   0          54s
-    pod/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancentemqns5   1/1     Running   0          1m
+    pod/hazelcast-hazelcast-enterprise-0                                  1/1     Running   0          3m
+    pod/hazelcast-hazelcast-enterprise-1                                  1/1     Running   0          2m
+    pod/hazelcast-hazelcast-enterprise-2                                  1/1     Running   0          1m
+    pod/hazelcast-hazelcast-enterprise-mancenter-0                        1/1     Running   0          1m
     
     NAME                                                                  TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)          AGE
-    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise             ClusterIP      10.19.244.179   <none>           5701/TCP         1m
-    service/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   LoadBalancer   10.19.240.2     35.184.181.188   8080:31383/TCP   1m
+    service/hazelcast-hazelcast-enterprise                                ClusterIP      None            <none>           5701/TCP         1m
+    service/hazelcast-hazelcast-enterprise-mancenter                      LoadBalancer   10.19.240.2     35.184.181.188   8080:31383/TCP   1m
     service/kubernetes                                                    ClusterIP      10.19.240.1     <none>           443/TCP          39m
     
-    NAME                                                                          DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-    deployment.apps/hazelcast-operator                                            1         1         1            1           6m
-    deployment.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter   1         1         1            1           1m
-    
-    NAME                                                                                     DESIRED   CURRENT   READY   AGE
-    replicaset.apps/hazelcast-operator-79468c667                                             1         1         1       6m
-    replicaset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise-mancenter-757cb7cd88   1         1         1       1m
-    
-    NAME                                                                 DESIRED   CURRENT   AGE
-    statefulset.apps/hz-9hwgko3mhi7u5esbwrelk0kj0-hazelcast-enterprise   2         2         1m
+    NAME                                                    DESIRED   CURRENT   AGE
+    statefulsets/hazelcast-hazelcast-enterprise             3         3         6m
+    statefulsets/hazelcast-hazelcast-enterprise-mancenter   1         1         6m
+
+    NAME                                 DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/hazelcast-operator   1         1         1            0           9m
+
+    NAME                                           DESIRED   CURRENT   READY     AGE
+    replicaset.apps/hazelcast-operator-b48448568   1         1         0         9m
 
 **Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
 

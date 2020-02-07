@@ -1,7 +1,42 @@
-apiVersion: hazelcast.com/v1alpha1
+apiVersion: hazelcast.com/v1
 kind: Hazelcast
 metadata:
-  name: hz
+  name: hazelcast
+  labels:
+    app.kubernetes.io/name: hazelcast
+    app.kubernetes.io/instance: hazelcast
+    app.kubernetes.io/managed-by: hazelcast-operator
 spec:
   hazelcast:
     licenseKeySecretName: hz-license-key-secret
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: beta.kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+  resources:
+    requests:
+      memory: 1024Mi
+      cpu: 100m
+    limits:
+      memory: 1024Mi
+  mancenter: 
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: beta.kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
+    resources:
+      requests:
+        memory: 1024Mi
+        cpu: 100m
+      limits:
+        memory: 1024Mi

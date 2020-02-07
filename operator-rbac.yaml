@@ -2,6 +2,10 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
 
 ---
 
@@ -9,6 +13,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
 rules:
   - apiGroups:
     - ""
@@ -86,6 +94,10 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
 subjects:
 - kind: ServiceAccount
   name: hazelcast-operator
