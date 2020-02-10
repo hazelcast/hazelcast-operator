@@ -24,6 +24,9 @@ spec:
       cpu: 100m
     limits:
       memory: 1024Mi
+  securityContext:
+    runAsUser: ""
+    fsGroup: ""
   mancenter: 
     affinity:
       nodeAffinity:
