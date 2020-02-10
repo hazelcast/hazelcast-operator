@@ -26,18 +26,13 @@ To create a new project, run the following command.
 #### Step 1: Create RBAC
 
 Run the following commands to configure the Operator permissions.
-
-    # Additional step needed for OpenShift
-    oc adm policy add-scc-to-user hostnetwork -z default
-     
+   
     # Configure RBAC
     oc apply -f operator-rbac.yaml
 
 Run the following commands to configure the Hazelcast cluster permissions.
 
     oc apply -f hazelcast-rbac.yaml
-    # Additional step needed for OpenShift
-    oc adm policy add-scc-to-user anyuid -z hazelcast
 
 #### Step 2: Create CRD (Custom Resource Definition)
 
