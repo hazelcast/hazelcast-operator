@@ -8,6 +8,19 @@ You must have one of the followings:
  * OpenShift cluster (with admin rights) and the `oc` command configured (you may use [Minishift](https://github.com/minishift/minishift))
  * Kubernetes cluster (with admin rights) and the `kubectl` command configured (you may use [Minikube](https://kubernetes.io/docs/getting-started-guides/minikube/))
 
+## Security Context Constraints (SCC) Requirements
+
+Hazelcast uses Redhat shipped `restricted` SCC which :
+
+- Ensures that pods cannot run as privileged.
+- Ensures that pods cannot mount host directory volumes.
+- Requires that a pod run as a user in a pre-allocated range of UIDs.
+- Requires that a pod run with a pre-allocated MCS label.
+- Allows pods to use any FSGroup.
+- Allows pods to use any supplemental group.
+
+You can refer to [Openshift Documentation](https://docs.openshift.com/) for more details.
+
 ## OpenShift Deployment steps
 
 Below are the steps to start a Hazelcast Enterprise cluster using Operator Framework. Note that the first 3 steps are usually performed only once for the OpenShift cluster/project (usually by the cluster admin). The step 4 is performed each time you want to create a new Hazelcast cluster.
@@ -91,7 +104,7 @@ Your Hazelcast Enterprise cluster (together with Management Center) should be cr
 
 **Note**: In `hazelcast.yaml` you can specify all parameters available in the [Hazelcast Enterprise Helm Chart](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise).
 
-To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then you can either use `NodePort` or create a route to Management Center with `oc expose`.
+To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then you can create a route to Management Center with `oc expose`.
 
 ![Management Center](markdown/management-center.png)
 
