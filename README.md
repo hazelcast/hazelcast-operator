@@ -206,7 +206,9 @@ If you want to modify the Hazelcast or Management Center version, update the fol
 
 #### Configuring SSL
 
-By default the communication is not secured. To enable SSL-protected communication between members and clients, you need first to provide the keys and certificates as a secret. For example, if you use keystore/truststore, then you can import them with the following OpenShift command.
+By default the communication is not secured. To enable SSL-protected communication between members and clients, you need first to provide the keys and certificates as a secret.
+
+For example, if you use keystore/truststore, then you can import them with the following OpenShift command.
 
     $ oc create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
 
@@ -214,9 +216,7 @@ The same command for Kubernetes looks as follows.
 
     $ kubectl create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
 
-Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys.
-
-Then, use the following Hazelcast configuration.
+Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys. Then, use the following Hazelcast configuration.
 
     apiVersion: hazelcast.com/v1
     kind: Hazelcast
