@@ -195,14 +195,11 @@ You may want to modify the behavior of the Hazelcast Operator.
 
 #### Changing Hazelcast and Management Center version
 
-If you want to modify the Hazelcast or Management Center version, update the following part in `hazelcast.yaml`.
+If you want to modify the Hazelcast or Management Center version, update `RELATED_IMAGE_HAZELCAST` and `RELATED_IMAGE_MANCENTER` environment variables in `operator.yaml`.
 
-    spec:
-      image:
-        tag: <hazelcast-version>
-      mancenter:
-        image:
-          tag: <management-center-version>
+#### Configuring Hazelcast Cluster
+
+You can check all configuration options in `hazelcast-full.yaml`. Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
 
 #### Configuring SSL
 
@@ -216,24 +213,34 @@ The same command for Kubernetes looks as follows.
 
     $ kubectl create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
 
-Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys. Then, use the following Hazelcast configuration.
+Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
+
+Then, use the following Hazelcast configuration.
 
     apiVersion: hazelcast.com/v1
     kind: Hazelcast
     metadata:
-      name: hazelcast
+      name: hz
     spec:
     ...
       secretsMountName: ssl-keys
+      livenessProbe:
+        scheme: HTTPS
+      readinessProbe:
+        scheme: HTTPS
       hazelcast:
         ssl: true
-        javaOpts: -Djavax.net.ssl.keyStore=/data/secrets/keystore -Djavax.net.ssl.keyStorePassword=<keystore_password> -Djavax.net.ssl.trustStore=/data/secrets/truststore -Djavax.net.ssl.trustStorePassword=<truststore_password>
+        javaOpts: -Djavax.net.ssl.keyStore=/data/secrets/keystore -Djavax.net.ssl.keyStorePassword=<keystore_password> -Djavax.net.ssl.trustStore=/data/secrets/truststore -Djavax.net.ssl.trustStorePassword=<truststore_password> -Dhazelcast.mancenter.url=https://hz-hazelcast-enterprise-mancenter:8443/hazelcast-mancenter
       mancenter:
+        livenessProbe:
+          enabled: false
+        readinessProbe:
+          enabled: false
         ssl: true
         secretsMountName: ssl-keys
         javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password> -Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password>
         service:
-          port: 8443
+          httpsPort: 8443
 
 For more information on Hazelcast Security check the following resources:
 
@@ -274,7 +281,7 @@ In such case, please update your `hazelcast.yaml` with the valid `runAsUser` and
     apiVersion: hazelcast.com/v1
     kind: Hazelcast
     metadata:
-      name: hazelcast
+      name: hz
     spec:
     ...
       securityContext:

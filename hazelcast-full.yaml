@@ -1,7 +1,7 @@
 apiVersion: hazelcast.com/v1
 kind: Hazelcast
 metadata:
-  name: hazelcast
+  name: hz
   labels:
     app.kubernetes.io/name: hazelcast
     app.kubernetes.io/instance: hazelcast
