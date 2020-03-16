@@ -30,6 +30,8 @@ Note: You need to clone this repository before following the next steps.
     git clone https://github.com/hazelcast/hazelcast-operator.git
     cd hazelcast-operator
 
+Note: By default the communication is not secured. To enable SSL, read the [Configuring SSL](#configuring-ssl) section.
+
 #### Step 0: Create project
 
 To create a new project, run the following command.
@@ -202,38 +204,45 @@ If you want to modify the Hazelcast or Management Center version, update the fol
         image:
           tag: <management-center-version>
 
+#### Configuring SSL
+
+By default the communication is not secured. To enable SSL-protected communication between members and clients, you need first to provide the keys and certificates as a secret. For example, if you use keystore/truststore, then you can import them with the following OpenShift command.
+
+    $ oc create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
+
+The same command for Kubernetes looks as follows. 
+
+    $ kubectl create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
+
+Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys.
+
+Then, use the following Hazelcast configuration.
+
+    apiVersion: hazelcast.com/v1
+    kind: Hazelcast
+    metadata:
+      name: hazelcast
+    spec:
+    ...
+      secretsMountName: ssl-keys
+      hazelcast:
+        ssl: true
+        javaOpts: -Djavax.net.ssl.keyStore=/data/secrets/keystore -Djavax.net.ssl.keyStorePassword=<keystore_password> -Djavax.net.ssl.trustStore=/data/secrets/truststore -Djavax.net.ssl.trustStorePassword=<truststore_password>
+      mancenter:
+        ssl: true
+        secretsMountName: ssl-keys
+        javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password> -Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password>
+        service:
+          port: 8443
+
+For more information on Hazelcast Security check the following resources:
+
+* [Hazelcast Reference Manual - Security](https://docs.hazelcast.org/docs/latest/manual/html-single/#security)
+* [Hazelcast Code Sample - Hazelcast with SSL on Kubernetes](https://github.com/hazelcast/hazelcast-code-samples/tree/master/hazelcast-integration/kubernetes/samples/ssl)
+
 ## Troubleshooting
 
 Kubernetes/OpenShift clusters are deployed in many different ways and you may encounter some of the following issues in some environments.
-
-#### Invalid value runAsUser
-
-Some of the OpenShift environments may have the restriction on the User ID used for the container.
-
-    $ oc describe statefulsets/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise
-    Warning  FailedCreate  28m (x13 over 28m)  statefulset-controller  create Pod my-hz-a2rqj3ai7p1ircbl9u7rr5riv-hazelcast-enterprise-0 in StatefulSet my-hz-a2rqj3ai7p1i
-    rcbl9u7rr5riv-hazelcast-enterprise failed error: pods "my-hz-a2rqj3ai7p1ircbl9u7rr5riv-hazelcast-enterprise-0" is forbidden: unable to validate against any security con
-    text constraint: [spec.containers[0].securityContext.securityContext.runAsUser: Invalid value: 65534: must be in the ranges: [1000170000, 1000179999]]
-    
-Then, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGroup` values.
-
-    apiVersion: hazelcast.com/v1alpha1
-    kind: Hazelcast
-    metadata:
-      name: hz
-    spec:
-      image:
-        tag: "3.11.2"
-      hazelcast:
-        licenseKeySecretName: "hz-license-key-secret"
-      serviceAccount:
-        create: false
-        name: hazelcast
-      securityContext:
-        runAsUser: 1000160000
-        fsGroup: 1000160000
-
-Note: You can find the current UID range for your project with the following command `oc describe project <project-name> | grep openshift.io/sa.scc.uid-range`.
 
 #### Invalid value: must be no more than 63 characters
 
@@ -262,18 +271,12 @@ Some of the OpenShift environments may have the restriction on the User ID used 
 
 In such case, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGroup` values.
 
-    apiVersion: hazelcast.com/v1alpha1
+    apiVersion: hazelcast.com/v1
     kind: Hazelcast
     metadata:
-      name: hz
+      name: hazelcast
     spec:
-      image:
-        tag: "3.11.2"
-      hazelcast:
-        licenseKeySecretName: "hz-license-key-secret"
-      serviceAccount:
-        create: false
-        name: hazelcast
+    ...
       securityContext:
         runAsUser: 1000160000
         fsGroup: 1000160000
