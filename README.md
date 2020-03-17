@@ -207,11 +207,11 @@ By default the communication is not secured. To enable SSL-protected communicati
 
 For example, if you use keystore/truststore, then you can import them with the following OpenShift command.
 
-    $ oc create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
+    $ oc create secret generic keystore --from-file=./keystore --from-file=./truststore
 
 The same command for Kubernetes looks as follows. 
 
-    $ kubectl create secret generic ssl-keys --from-file=./keystore --from-file=./truststore
+    $ kubectl create secret generic keystore --from-file=./keystore --from-file=./truststore
 
 Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
 
@@ -223,28 +223,49 @@ Then, use the following Hazelcast configuration.
       name: hz
     spec:
     ...
-      secretsMountName: ssl-keys
+      secretsMountName: keystore
+      hazelcast:
+        yaml:
+          hazelcast:
+            network:
+              ssl:
+                enabled: true
+                properties:
+                  keyStore: /data/secrets/keystore
+                  keyStorePassword: <keystore_password>
+                  trustStore: /data/secrets/truststore
+                  trustStorePassword: <truststore_password>
       livenessProbe:
         scheme: HTTPS
       readinessProbe:
         scheme: HTTPS
-      hazelcast:
-        ssl: true
-        javaOpts: -Djavax.net.ssl.keyStore=/data/secrets/keystore -Djavax.net.ssl.keyStorePassword=<keystore_password> -Djavax.net.ssl.trustStore=/data/secrets/truststore -Djavax.net.ssl.trustStorePassword=<truststore_password> -Dhazelcast.mancenter.url=https://hz-hazelcast-enterprise-mancenter:8443/hazelcast-mancenter
       mancenter:
-        livenessProbe:
-          enabled: false
-        readinessProbe:
-          enabled: false
         ssl: true
-        secretsMountName: ssl-keys
-        javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password> -Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password>
+        secretsMountName: keystore
+        yaml:
+          hazelcast-client:
+            network:
+              ssl:
+                enabled: true
+                properties:
+                  keyStore: /secrets/keystore
+                  keyStorePassword: <keystore_password>
+                  trustStore: /secrets/truststore
+                  trustStorePassword: <truststore_password>
+        javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password>
         service:
           httpsPort: 8443
+
+Additionally, if you need Mutual Authentication for Management Center, you can add the following parameters to `mancenter.javaOpts`.
+
+```
+-Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password> -Dhazelcast.mc.tls.mutualAuthentication=REQUIRED
+```
 
 For more information on Hazelcast Security check the following resources:
 
 * [Hazelcast Reference Manual - Security](https://docs.hazelcast.org/docs/latest/manual/html-single/#security)
+* [Management Center Reference Manual - Security](https://docs.hazelcast.org/docs/management-center/latest/manual/html/index.html#configuring-and-enabling-security)
 * [Hazelcast Code Sample - Hazelcast with SSL on Kubernetes](https://github.com/hazelcast/hazelcast-code-samples/tree/master/hazelcast-integration/kubernetes/samples/ssl)
 
 ## Troubleshooting
