@@ -8,6 +8,10 @@ You must have one of the followings:
  * OpenShift cluster (with admin rights) and the `oc` command configured (you may use [Minishift](https://github.com/minishift/minishift))
  * Kubernetes cluster (with admin rights) and the `kubectl` command configured (you may use [Minikube](https://kubernetes.io/docs/getting-started-guides/minikube/))
 
+ Versions compatibility:
+ * hazelcast-operator 0.2+ is compatible with hazelcast 4+
+ * for older hazelcast versions, use hazelcast-operator 0.1.x
+
 ## Security Context Constraints (SCC) Requirements
 
 Hazelcast uses Redhat shipped `restricted` SCC which :
