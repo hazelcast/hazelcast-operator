@@ -8,6 +8,10 @@ You must have one of the followings:
  * OpenShift cluster (with admin rights) and the `oc` command configured (you may use [Minishift](https://github.com/minishift/minishift))
  * Kubernetes cluster (with admin rights) and the `kubectl` command configured (you may use [Minikube](https://kubernetes.io/docs/getting-started-guides/minikube/))
 
+ Versions compatibility:
+ * hazelcast-operator 0.2+ is compatible with hazelcast 4+
+ * for older hazelcast versions, use hazelcast-operator 0.1.x
+
 ## Security Context Constraints (SCC) Requirements
 
 Hazelcast uses Redhat shipped `restricted` SCC which :
@@ -29,6 +33,8 @@ Note: You need to clone this repository before following the next steps.
 
     git clone https://github.com/hazelcast/hazelcast-operator.git
     cd hazelcast-operator
+
+Note: By default the communication is not secured. To enable SSL, read the [Configuring SSL](#configuring-ssl) section.
 
 #### Step 0: Create project
 
@@ -193,47 +199,82 @@ You may want to modify the behavior of the Hazelcast Operator.
 
 #### Changing Hazelcast and Management Center version
 
-If you want to modify the Hazelcast or Management Center version, update the following part in `hazelcast.yaml`.
+If you want to modify the Hazelcast or Management Center version, update `RELATED_IMAGE_HAZELCAST` and `RELATED_IMAGE_MANCENTER` environment variables in `operator.yaml`.
 
-    spec:
-      image:
-        tag: <hazelcast-version>
-      mancenter:
-        image:
-          tag: <management-center-version>
+#### Configuring Hazelcast Cluster
 
-## Troubleshooting
+You can check all configuration options in `hazelcast-full.yaml`. Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
 
-Kubernetes/OpenShift clusters are deployed in many different ways and you may encounter some of the following issues in some environments.
+#### Configuring SSL
 
-#### Invalid value runAsUser
+By default the communication is not secured. To enable SSL-protected communication between members and clients, you need first to provide the keys and certificates as a secret.
 
-Some of the OpenShift environments may have the restriction on the User ID used for the container.
+For example, if you use keystore/truststore, then you can import them with the following OpenShift command.
 
-    $ oc describe statefulsets/my-hz-ewvci29k7k5itktwi20m35e3b-hazelcast-enterprise
-    Warning  FailedCreate  28m (x13 over 28m)  statefulset-controller  create Pod my-hz-a2rqj3ai7p1ircbl9u7rr5riv-hazelcast-enterprise-0 in StatefulSet my-hz-a2rqj3ai7p1i
-    rcbl9u7rr5riv-hazelcast-enterprise failed error: pods "my-hz-a2rqj3ai7p1ircbl9u7rr5riv-hazelcast-enterprise-0" is forbidden: unable to validate against any security con
-    text constraint: [spec.containers[0].securityContext.securityContext.runAsUser: Invalid value: 65534: must be in the ranges: [1000170000, 1000179999]]
-    
-Then, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGroup` values.
+    $ oc create secret generic keystore --from-file=./keystore --from-file=./truststore
 
-    apiVersion: hazelcast.com/v1alpha1
+The same command for Kubernetes looks as follows. 
+
+    $ kubectl create secret generic keystore --from-file=./keystore --from-file=./truststore
+
+Instead of manually creating keystore/truststore, you can use [cert-manager](https://cert-manager.io/docs/) to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
+
+Then, use the following Hazelcast configuration.
+
+    apiVersion: hazelcast.com/v1
     kind: Hazelcast
     metadata:
       name: hz
     spec:
-      image:
-        tag: "3.11.2"
+    ...
+      secretsMountName: keystore
       hazelcast:
-        licenseKeySecretName: "hz-license-key-secret"
-      serviceAccount:
-        create: false
-        name: hazelcast
-      securityContext:
-        runAsUser: 1000160000
-        fsGroup: 1000160000
+        yaml:
+          hazelcast:
+            network:
+              ssl:
+                enabled: true
+                properties:
+                  keyStore: /data/secrets/keystore
+                  keyStorePassword: <keystore_password>
+                  trustStore: /data/secrets/truststore
+                  trustStorePassword: <truststore_password>
+      livenessProbe:
+        scheme: HTTPS
+      readinessProbe:
+        scheme: HTTPS
+      mancenter:
+        ssl: true
+        secretsMountName: keystore
+        yaml:
+          hazelcast-client:
+            network:
+              ssl:
+                enabled: true
+                properties:
+                  keyStore: /secrets/keystore
+                  keyStorePassword: <keystore_password>
+                  trustStore: /secrets/truststore
+                  trustStorePassword: <truststore_password>
+        javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password>
+        service:
+          httpsPort: 8443
 
-Note: You can find the current UID range for your project with the following command `oc describe project <project-name> | grep openshift.io/sa.scc.uid-range`.
+Additionally, if you need Mutual Authentication for Management Center, you can add the following parameters to `mancenter.javaOpts`.
+
+```
+-Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password> -Dhazelcast.mc.tls.mutualAuthentication=REQUIRED
+```
+
+For more information on Hazelcast Security check the following resources:
+
+* [Hazelcast Reference Manual - Security](https://docs.hazelcast.org/docs/latest/manual/html-single/#security)
+* [Management Center Reference Manual - Security](https://docs.hazelcast.org/docs/management-center/latest/manual/html/index.html#configuring-and-enabling-security)
+* [Hazelcast Code Sample - Hazelcast with SSL on Kubernetes](https://github.com/hazelcast/hazelcast-code-samples/tree/master/hazelcast-integration/kubernetes/samples/ssl)
+
+## Troubleshooting
+
+Kubernetes/OpenShift clusters are deployed in many different ways and you may encounter some of the following issues in some environments.
 
 #### Invalid value: must be no more than 63 characters
 
@@ -262,18 +303,12 @@ Some of the OpenShift environments may have the restriction on the User ID used 
 
 In such case, please update your `hazelcast.yaml` with the valid `runAsUser` and `fsGroup` values.
 
-    apiVersion: hazelcast.com/v1alpha1
+    apiVersion: hazelcast.com/v1
     kind: Hazelcast
     metadata:
       name: hz
     spec:
-      image:
-        tag: "3.11.2"
-      hazelcast:
-        licenseKeySecretName: "hz-license-key-secret"
-      serviceAccount:
-        create: false
-        name: hazelcast
+    ...
       securityContext:
         runAsUser: 1000160000
         fsGroup: 1000160000
