@@ -217,7 +217,7 @@ The same command for Kubernetes looks as follows.
 
     $ kubectl create secret generic keystore --from-file=./keystore --from-file=./truststore
 
-Instead of manually creating keystore/truststore, you can use cert-manager to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
+Instead of manually creating keystore/truststore, you can use [cert-manager](https://cert-manager.io/docs/) to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
 
 Then, use the following Hazelcast configuration.
 
