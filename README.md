@@ -143,7 +143,7 @@ To create the Hazelcast resource definition, run the following command.
 
 Deploy Hazelcast Enterprise Operator with the following command.
 
-    kubectl apply -f operator.yaml
+    kubectl --validate=false apply -f operator.yaml
 
 #### Step 4: Create Secret with Hazelcast License Key
 
