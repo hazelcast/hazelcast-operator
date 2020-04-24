@@ -43,3 +43,9 @@ spec:
         cpu: 100m
       limits:
         memory: 1024Mi
+  rbac:
+    create: false
+
+  serviceAccount:
+    create: false
+    name: hazelcast
