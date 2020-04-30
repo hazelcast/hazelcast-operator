@@ -64,7 +64,9 @@ To create the Hazelcast resource definition, run the following command.
 
 Deploy Hazelcast Enterprise Operator with the following command.
 
-    oc apply -f operator.yaml
+    oc apply -f operator-rhel.yaml
+
+Note that if you prefer Docker Hub images, you can use `operator-docker-hub.yaml` instead.
 
 #### Step 4: Create Secret with Hazelcast License Key
 
@@ -143,7 +145,7 @@ To create the Hazelcast resource definition, run the following command.
 
 Deploy Hazelcast Enterprise Operator with the following command.
 
-    kubectl --validate=false apply -f operator.yaml
+    kubectl --validate=false apply -f operator-docker-hub.yaml
 
 #### Step 4: Create Secret with Hazelcast License Key
 
