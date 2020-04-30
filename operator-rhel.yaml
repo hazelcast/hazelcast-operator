@@ -20,7 +20,7 @@ spec:
       annotations:
         productID: hazelcast-operator
         productName: Hazelcast Operator
-        productVersion: 0.2.1
+        productVersion: 0.2.3
     spec:
       serviceAccountName: hazelcast-operator
       securityContext:
