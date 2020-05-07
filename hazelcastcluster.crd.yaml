@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: hazelcast
     app.kubernetes.io/instance: hazelcast
-    app.kubernetes.io/managed-by: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 spec:
   group: hazelcast.com
   names:
