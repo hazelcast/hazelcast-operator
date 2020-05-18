@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hazelcast
+  labels:
+    app.kubernetes.io/name: hazelcast
+    app.kubernetes.io/instance: hazelcast
+    app.kubernetes.io/managed-by: hazelcast-operator
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hazelcast
+  labels:
+    app.kubernetes.io/name: hazelcast
+    app.kubernetes.io/instance: hazelcast
+    app.kubernetes.io/managed-by: hazelcast-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hazelcast
+  labels:
+    app.kubernetes.io/name: hazelcast
+    app.kubernetes.io/instance: hazelcast
+    app.kubernetes.io/managed-by: hazelcast-operator
+subjects:
+- kind: ServiceAccount
+  name: hazelcast
+roleRef:
+  kind: ClusterRole
+  name: hazelcast
+  apiGroup: rbac.authorization.k8s.io

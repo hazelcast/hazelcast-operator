@@ -1,11 +1,11 @@
-apiVersion: hazelcast.com/v1
-kind: Hazelcast
+apiVersion: hazelcast.com/v1alpha1
+kind: HazelcastEnterprise
 metadata:
   name: hz
   labels:
     app.kubernetes.io/name: hazelcast
     app.kubernetes.io/instance: hazelcast
-    app.kubernetes.io/managed-by: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 spec:
   image:
     # pullPolicy is the Docker image pull policy

@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hazelcast-operator
+  name: hazelcast-enterprise-operator
   labels:
-    app.kubernetes.io/name: hazelcast-operator
-    app.kubernetes.io/instance: hazelcast-operator
-    app.kubernetes.io/managed-by: hazelast-operator
+    app.kubernetes.io/name: hazelcast-enterprise-operator
+    app.kubernetes.io/instance: hazelcast-enterprise-operator
+    app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: hazelcast-operator
+      app.kubernetes.io/name: hazelcast-enterprise-operator
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: hazelcast-operator
-        app.kubernetes.io/instance: hazelcast-operator
-        app.kubernetes.io/managed-by: hazelcast-operator
+        app.kubernetes.io/name: hazelcast-enterprise-operator
+        app.kubernetes.io/instance: hazelcast-enterprise-operator
+        app.kubernetes.io/managed-by: hazelcast-enterprise-operator
       annotations:
-        productID: hazelcast-operator
+        productID: hazelcast-enterprise-operator
         productName: Hazelcast Operator
-        productVersion: 0.2.1
+        productVersion: 0.3.0
     spec:
-      serviceAccountName: hazelcast-operator
+      serviceAccountName: hazelcast-enterprise-operator
       securityContext:
         capabilities:
           drop:
@@ -37,8 +37,8 @@ spec:
                 values:
                 - amd64
       containers:
-        - name: hazelcast-operator
-          image: hazelcast/hazelcast-operator:0.2.1
+        - name: hazelcast-enterprise-operator
+          image: hazelcast/hazelcast-enterprise-operator:0.3.0
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -50,11 +50,11 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "hazelcast-operator"
+              value: "hazelcast-enterprise-operator"
             - name: RELATED_IMAGE_HAZELCAST
               value: hazelcast/hazelcast-enterprise:4.0.1
             - name: RELATED_IMAGE_MANCENTER
-              value: hazelcast/management-center:4.0.1
+              value: hazelcast/management-center:4.0.2
           resources:
             limits:
               cpu: "0.1"

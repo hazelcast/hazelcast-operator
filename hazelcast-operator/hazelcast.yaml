@@ -1,14 +1,12 @@
-apiVersion: hazelcast.com/v1
+apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
   name: hz
   labels:
     app.kubernetes.io/name: hazelcast
     app.kubernetes.io/instance: hazelcast
-    app.kubernetes.io/managed-by: hazelcast-enterprise-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
 spec:
-  hazelcast:
-    licenseKeySecretName: hz-license-key-secret
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
