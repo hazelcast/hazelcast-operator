@@ -145,7 +145,11 @@ You may want to modify the behavior of the Hazelcast Operator.
 
 #### Changing Hazelcast and Management Center version
 
-If you want to modify the Hazelcast or Management Center version, update `RELATED_IMAGE_HAZELCAST` and `RELATED_IMAGE_MANCENTER` environment variables in `operator.yaml`.
+If you want to modify the Hazelcast or Management Center version, update `RELATED_IMAGE_HAZELCAST` and `RELATED_IMAGE_MANCENTER` environment variables in `operator-rhel.yaml` (or `operator-docker-hub.yaml`).
+
+#### Configuring Hazelcast Cluster
+
+Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast#configuration).
 
 ## Troubleshooting
 
