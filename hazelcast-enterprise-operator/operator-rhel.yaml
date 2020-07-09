@@ -52,7 +52,7 @@ spec:
             - name: OPERATOR_NAME
               value: "hazelcast-enterprise-operator"
             - name: RELATED_IMAGE_HAZELCAST
-              value: registry.connect.redhat.com/hazelcast/hazelcast-4-rhel8:4.0-1
+              value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8:4.0-1
             - name: RELATED_IMAGE_MANCENTER
               value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8:4.0-2
           resources:
