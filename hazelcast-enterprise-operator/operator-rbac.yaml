@@ -28,6 +28,14 @@ rules:
     - events
     - configmaps
     - secrets
+    - ingresses
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
+    - "extensions"
+    resources:
+    - ingresses
     verbs:
     - '*'
   - apiGroups:
