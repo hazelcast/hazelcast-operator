@@ -32,6 +32,13 @@ rules:
     - '*'
   - apiGroups:
     - ""
+    - "extensions"
+    resources:
+    - ingresses
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
     resources:
     - namespaces
     verbs:
