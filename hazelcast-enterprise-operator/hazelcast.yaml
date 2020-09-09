@@ -26,6 +26,7 @@ spec:
       memory: 1024Mi
   securityContext:
     runAsUser: ""
+    runAsGroup: ""
     fsGroup: ""
   mancenter:
     affinity:
