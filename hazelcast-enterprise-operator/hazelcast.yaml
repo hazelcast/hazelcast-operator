@@ -7,6 +7,12 @@ metadata:
     app.kubernetes.io/instance: hazelcast
     app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 spec:
+  cluster:
+    memberCount: 3
+  service:
+    create: true
+    type: ClusterIP
+    clusterIP: "None"
   hazelcast:
     licenseKeySecretName: hz-license-key-secret
   affinity:

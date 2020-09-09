@@ -1,20 +1,20 @@
 apiVersion: hazelcast.com/v1alpha1
-kind: HazelcastEnterprise
+kind: Hazelcast
 metadata:
   name: hz
   labels:
     app.kubernetes.io/name: hazelcast
     app.kubernetes.io/instance: hazelcast
-    app.kubernetes.io/managed-by: hazelcast-enterprise-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
 spec:
   ## Hazelcast image version
-  ## ref: https://hub.docker.com/r/hazelcast/hazelcast-enterprise-kubernetes/tags/
+  ## ref: https://hub.docker.com/r/hazelcast/hazelcast-kubernetes/tags/
   ##
   image:
     # repository is the Hazelcast image name
-    repository: "hazelcast/hazelcast-enterprise"
+    repository: "hazelcast/hazelcast"
     # tag is the Hazelcast image tag
-    tag: "3.12.8"
+    tag: "3.12.9"
     # pullPolicy is the Docker image pull policy
     # It's recommended to change this to 'Always' if the image tag is 'latest'
     # ref: http://kubernetes.io/docs/user-guide/images/#updating-images
@@ -33,10 +33,6 @@ spec:
 
   # Hazelcast properties
   hazelcast:
-    # ssl is a flag used to enable SSL for Hazelcast
-    ssl: false
-    # updateClusterVersionAfterRollingUpgrade is a flag used to automatically update the Hazelcast cluster version of the rolling upgrade procedure
-    updateClusterVersionAfterRollingUpgrade: true
     # javaOpts are additional JAVA_OPTS properties for Hazelcast member
     javaOpts:
     # loggingLevel is the level of Hazelcast logs (SEVERE, WARNING, INFO, CONFIG, FINE, FINER, and FINEST)
@@ -56,19 +52,11 @@ spec:
               service-name: ${serviceName}
               namespace: ${namespace}
               resolve-not-ready-addresses: true
-          ssl:
-            enabled: ${hazelcast.ssl}
           rest-api:
             enabled: true
             endpoint-groups:
               HEALTH_CHECK:
                 enabled: true
-        hot-restart-persistence:
-          enabled: ${hazelcast.hotRestart}
-          base-dir: /data/hot-restart
-          validation-timeout-seconds: 1200
-          data-load-timeout-seconds: 900
-          auto-remove-stale-data: true
         management-center:
           enabled: ${hazelcast.mancenter.enabled}
           url: ${hazelcast.mancenter.url}
@@ -125,8 +113,6 @@ spec:
     path: /hazelcast/health/node-state
     # port that will be used in liveness probe calls
     # port:
-    # HTTPS or HTTP scheme
-    scheme: HTTP
 
   # Hazelcast Readiness probe
   readinessProbe:
@@ -146,8 +132,6 @@ spec:
     path: /hazelcast/health/ready
     # port that will be used in readiness probe calls
     # port:
-    # HTTPS or HTTP scheme
-    scheme: HTTP
 
   # Configure resource requests and limits
   # ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -201,22 +185,6 @@ spec:
     # readOnlyRootFilesystem is a flag to enable readOnlyRootFilesystem for the Hazelcast security context
     readOnlyRootFilesystem: true
 
-  # Hazelcast Hot Restart persistence feature
-  hotRestart:
-    # enabled is a flag to enabled Hot Restart feature
-    enabled: false
-    # existingClaim is a name of the existing Persistence Volume Claim that will be used for the Hot Restart persistence
-    # if not defined, a new Persistent Volume Claim is created with the default name
-    # existingClaim:
-    # accessModes defines the access modes for the created Persistent Volume Claim
-    accessModes:
-    - ReadWriteMany
-    # size is the size of Persistent Volume Claim
-    size: 8Gi
-    # hostPath is the path of the node machine directory that is used for persistent storage
-    # if defined, it's used instead of Persistent Volume Claim
-    # hostPath:
-
   # Allows to enable a Prometheus to scrape pods, implemented for Hazelcast version >= 3.12 (or 'latest')
   metrics:
     enabled: false
@@ -226,9 +194,6 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
-
-  # secretsMountName is the secret name that is mounted as '/data/secrets/' (e.g. with keystore/trustore files)
-  # secretsMountName:
 
   # customVolume is the configuration for any volume mounted as '/data/custom/' (e.g. to mount a volume with custom JARs)
   # customVolume:
@@ -267,8 +232,6 @@ spec:
       #   hosts:
       #   - hazelcast-mancenter.cluster.domain
 
-    # ssl is a flag to enable SSL for Management Center
-    ssl: false
     # javaOpts are additional JAVA_OPTS properties for Hazelcast Management Center
     javaOpts:
 
@@ -352,5 +315,3 @@ spec:
       # failureThreshold is the minimum consecutive failures for the probe to be considered failed after having succeeded
       failureThreshold: 3
 
-    # secretsMountName is the secret name that is mounted as '/data/secrets/' (e.g. with keystore/trustore files)
-    # secretsMountName:
