@@ -274,7 +274,7 @@ spec:
 
     # licenseKey is the license key for Hazelcast Management Center
     # if not provided, it can be filled in the Management Center web interface
-    licenseKey:
+    # licenseKey:
     # licenseKeySecretName is the name of the secret where the Hazelcast Management Center License Key is stored (can be used instead of licenseKey)
     # licenseKeySecretName:
 

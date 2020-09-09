@@ -33,6 +33,9 @@ spec:
     runAsGroup: ""
     fsGroup: ""
   mancenter:
+    service:
+      type: LoadBalancer
+      port: 8080
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
