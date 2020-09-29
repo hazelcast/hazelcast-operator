@@ -7,6 +7,12 @@ metadata:
     app.kubernetes.io/instance: hazelcast
     app.kubernetes.io/managed-by: hazelcast-operator
 spec:
+  cluster:
+    memberCount: 3
+  service:
+    create: true
+    type: ClusterIP
+    clusterIP: "None"
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -27,6 +33,9 @@ spec:
     runAsGroup: ""
     fsGroup: ""
   mancenter:
+    service:
+      type: LoadBalancer
+      port: 8080
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,7 +53,6 @@ spec:
         memory: 1024Mi
   rbac:
     create: false
-
   serviceAccount:
     create: false
     name: hazelcast
