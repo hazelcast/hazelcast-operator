@@ -11,10 +11,6 @@ spec:
   ## ref: https://hub.docker.com/r/hazelcast/hazelcast-kubernetes/tags/
   ##
   image:
-    # repository is the Hazelcast image name
-    repository: "hazelcast/hazelcast"
-    # tag is the Hazelcast image tag
-    tag: "3.12.9"
     # pullPolicy is the Docker image pull policy
     # It's recommended to change this to 'Always' if the image tag is 'latest'
     # ref: http://kubernetes.io/docs/user-guide/images/#updating-images
