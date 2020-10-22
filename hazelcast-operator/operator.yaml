@@ -20,7 +20,7 @@ spec:
       annotations:
         productID: hazelcast-operator
         productName: Hazelcast Operator
-        productVersion: 0.3.2
+        productVersion: 0.3.3
     spec:
       serviceAccountName: hazelcast-operator
       securityContext:
@@ -38,7 +38,7 @@ spec:
                 - amd64
       containers:
         - name: hazelcast-operator
-          image: hazelcast/hazelcast-operator:0.3.2
+          image: hazelcast/hazelcast-enterprise:0.3.3
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -50,11 +50,15 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "hazelcast-operator"
-            - name: RELATED_IMAGE_HAZELCAST
-              value: hazelcast/hazelcast:4.0.2
-            - name: RELATED_IMAGE_MANCENTER
-              value: hazelcast/management-center:4.2020.08
+              value: hazelcast-operator
+            - name: HAZELCAST_IMAGE_REPOSITORY
+              value: hazelcast/hazelcast-enterprise
+            - name: HAZELCAST_IMAGE_TAG
+              value: 4.0.3
+            - name: MC_IMAGE_REPOSITORY
+              value: hazelcast/management-center
+            - name: MC_IMAGE_TAG
+              value: 4.2020.08
           resources:
             limits:
               cpu: "0.1"
