@@ -11,6 +11,10 @@ spec:
   ## ref: https://hub.docker.com/r/hazelcast/hazelcast-enterprise-kubernetes/tags/
   ##
   image:
+    # repository is the Hazelcast image name
+    repository: "hazelcast/hazelcast-enterprise"
+    # tag is the Hazelcast image tag
+    tag: "4.0.3"
     # pullPolicy is the Docker image pull policy
     # It's recommended to change this to 'Always' if the image tag is 'latest'
     # ref: http://kubernetes.io/docs/user-guide/images/#updating-images
@@ -240,7 +244,7 @@ spec:
       # repository is the Hazelcast Management Center image name
       repository: "hazelcast/management-center"
       # tag is the Hazelcast Management Center image tag
-      tag: "3.12.12"
+      tag: "4.2020.08"
       # pullPolicy is the Docker image pull policy
       # It's recommended to change this to 'Always' if the image tag is 'latest'
       # ref: http://kubernetes.io/docs/user-guide/images/#updating-images

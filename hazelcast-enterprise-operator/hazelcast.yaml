@@ -7,8 +7,9 @@ metadata:
     app.kubernetes.io/instance: hazelcast
     app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 spec:
-  cluster:
-    memberCount: 3
+  image:
+    repository: "hazelcast/hazelcast-enterprise"
+    tag: 4.0.3
   service:
     create: true
     type: ClusterIP
@@ -35,6 +36,9 @@ spec:
     runAsGroup: ""
     fsGroup: ""
   mancenter:
+    image:
+      repository: "hazelcast/management-center"
+      tag: 4.2020.08
     service:
       type: LoadBalancer
       port: 8080
