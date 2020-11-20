@@ -38,7 +38,7 @@ spec:
                 - amd64
       containers:
         - name: hazelcast-operator
-          image: hazelcast/hazelcast-enterprise:0.3.3
+          image: hazelcast/hazelcast-operator:0.3.3
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -52,7 +52,7 @@ spec:
             - name: OPERATOR_NAME
               value: hazelcast-operator
             - name: HAZELCAST_IMAGE_REPOSITORY
-              value: hazelcast/hazelcast-enterprise
+              value: hazelcast/hazelcast
             - name: HAZELCAST_IMAGE_TAG
               value: 4.0.3
             - name: MC_IMAGE_REPOSITORY
