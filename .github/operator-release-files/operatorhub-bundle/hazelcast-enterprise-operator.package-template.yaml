@@ -1,0 +1,5 @@
+channels:
+  - currentCSV: hazelcast-enterprise-operator.vOPERATOR_VERSION
+    name: alpha
+defaultChannel: alpha
+packageName: hazelcast-enterprise-operator
