@@ -199,42 +199,14 @@ jobs:
           kubectl --validate=false apply -f operator.yaml
 
           #WAIT FOR OPERATOR TO BE READY
-          for i in `seq 1 15`; do
-            if [[ $(kubectl get pods -l app.kubernetes.io/name=${OPERATOR_NAME} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; then
-              echo "waiting for Hazelcast operator pod to be ready, " && sleep 10
-              if [ "$i" = "15" ]; then
-                echo "Hazelcast operator pod failed to be ready!"
-                kubectl get pods
-                echo ""
-                kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
-                exit 1
-              fi
-            else
-              echo "Hazelcast operator pod is ready!"
-              break
-            fi
-          done
+kubectl wait --for=condition=Ready --timeout=60s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
 
           kubectl apply -f hazelcast.yaml
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
 
 
           #WAIT FOR hz-hazelcast-2 TO BE READY
-          for i in `seq 1 15`; do
-            if [[ $(kubectl get pods hz-${NAME}-2 -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; then
-              echo "waiting for hz-${NAME}-2 pod" && sleep 10
-              if [ "$i" = "15" ]; then
-                echo "hz-${NAME}-2 pod failed to be ready!"
-                kubectl get pods
-                echo ""
-                kubectl logs hz-${NAME}-2
-                exit 1
-              fi
-            else
-              echo "hz-${NAME}-2 is ready!"
-              break
-            fi
-          done
+ kubectl wait --for=condition=Ready --timeout=60s pod -l _LABEL_OF_HZ_POD_=${OPERATOR_NAME}
 
 
           #WAIT FOR CLUSTER SIZE TO BE 3
@@ -258,7 +230,7 @@ jobs:
 
       - name: Copy operatorhub-bundle from the repo
         run: |
-          cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle \
+          cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle ./
                 ./
 
 
