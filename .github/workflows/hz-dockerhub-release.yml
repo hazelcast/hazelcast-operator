@@ -144,6 +144,8 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
+          run -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
+
 
       - name: Update Hazelcast Operator files
         run: |
@@ -317,5 +319,5 @@ jobs:
           git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push artifacts to guides-site repo
+      - name: Push artifacts to hazelcast-operator
         run: git push
