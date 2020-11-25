@@ -48,36 +48,17 @@ jobs:
 
       - name: Install Operator-Sdk
         run: |
-          set -x
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
           /operator-sdk version
 
       - name: Install oc
         run: |
-          set -x
           curl -L -o ./oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
           tar xvzf oc.tar.gz
           rm oc.tar.gz
           sudo mv oc /oc
           /oc version
-        
-      - name: Check for utility packages
-        run: | 
-          echo "Checking dependencies..."
-          for dep in wget zip ; do
-              if hash ${dep} 2>/dev/null; then
-                  echo ${dep} installed...
-              else
-                  sudo apt install ${dep} -y
-                  if hash ${dep} 2>/dev/null; then
-                    echo ${dep} installed...
-                  else
-                    echo ${dep} could not be installed!
-                    exit 1
-                  fi
-              fi
-          done
 
       - name: Checkout to hazelcast-operator
         uses: actions/checkout@v2
@@ -90,9 +71,9 @@ jobs:
           mkdir WORKDIR
           cd WORKDIR
           if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then 
-            echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded" 
+            echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded!" 
           else 
-            echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded" 
+            echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded!" 
           fi 
           tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
           rm ${NAME}-${HELM_CHART_VERSION}.tgz
@@ -138,12 +119,17 @@ jobs:
           name: updated-helm-charts
           path: ./WORKDIR/hazelcast
 
+
       - name: Generate Operator and Operator Image
         working-directory: ./WORKDIR
         run: |
           OPERATOR_NAME="${NAME}-operator"
           OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
           OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}" 
+
+          echo "OPERATOR_NAME=${OPERATOR_NAME}" >> $GITHUB_ENV
+          echo "OPERATOR_REPOSITORY=${OPERATOR_REPOSITORY}" >> $GITHUB_ENV
+          echo "OPERATOR_IMAGE=${OPERATOR_IMAGE}" >> $GITHUB_ENV
           
           /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
           cd ${OPERATOR_NAME}
@@ -158,24 +144,24 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
+
       - name: Update Hazelcast Operator files
         run: |
-          cp -r ./operator-repo/${NAME}-operator ./${NAME}-op
+          cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i -e  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${NAME}-op/operator.yaml
-          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${NAME}-op/operator.yaml
-          sed -i -e  "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${NAME}-op/operator.yaml
+          sed -i -e  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i -e  "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
 
-          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${NAME}-op/hazelcast.yaml
-          sed -i -e "0,/tag:/! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${NAME}-op/hazelcast.yaml
+          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
 
-
-      - name: Upload Hazelcast-op files
+      - name: Upload Hazelcast-operator files
         uses: actions/upload-artifact@v2
         with:
           name: hazelcast-operator
-          path: ./hazelcast-op 
+          path: ./hazelcast-operator
 
 
       - name: Set up Kubernetes in Docker
@@ -183,13 +169,10 @@ jobs:
         with:
           version: "v0.7.0"
 
-      - name: Deploy Hazelcast Cluster and Validate the Cluster
+
+      - name: Deploy Hazelcast Cluster
         run: |
-          cd ./${NAME}-op
-          
-          OPERATOR_NAME="${NAME}-operator"
-          OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
-          OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}" 
+          cd ./${OPERATOR_NAME}
 
           kind load docker-image ${OPERATOR_IMAGE}
 
@@ -199,29 +182,55 @@ jobs:
           kubectl --validate=false apply -f operator.yaml
 
           #WAIT FOR OPERATOR TO BE READY
-kubectl wait --for=condition=Ready --timeout=60s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
+          kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
 
           kubectl apply -f hazelcast.yaml
+        
+
+      - name: Print log of the Hazelcast-Operator
+        run: |
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
 
 
+      - name: Validate Cluster Size
+        run: |
+          HZ_NAME = grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml
+          
           #WAIT FOR hz-hazelcast-2 TO BE READY
- kubectl wait --for=condition=Ready --timeout=60s pod -l _LABEL_OF_HZ_POD_=${OPERATOR_NAME}
+          kubectl wait --for=condition=Ready --timeout=150s pod/${HZ_NAME}-${NAME}-2 
 
 
           #WAIT FOR CLUSTER SIZE TO BE 3
-          for i in `seq 1 10`; do
-            num=$(kubectl logs hz-${NAME}-2 | grep "Members {size:3, ver:3}" | wc -l)
+          for i in `seq 1 5`; do
+            num=$(kubectl logs ${HZ_NAME}-${NAME}-2 | grep "Members {size:3, ver:3}" | wc -l)
             if [ "$num" = "1" ]; then
               echo "Hazelcast cluster size is 3!"
               break
             else
-              echo "waiting for member size to be 3" && sleep 2
-              if [ "$i" = "15" ]; then
+              echo "Waiting for cluster size to be 3..." && sleep 4
+              if [ "$i" = "5" ]; then
                 echo "Hazelcast Member size is not 3!"
                 kubectl get pods
                 echo ""
-                kubectl logs hz-${NAME}-2
+                kubectl logs ${HZ_NAME}-${NAME}-2 
+                exit 1 
+              fi
+            fi
+          done
+
+          #CHECK IF ALL MEMBERS CAN COMMUNICATE WITH MANAGEMENT CENTER
+          for i in `seq 1 5`; do
+            MEMBER_COUNT=$(kubectl logs ${HZ_NAME}-${NAME}-mancenter-0 | grep -E "Started communication with (a new )?member" | wc -l)
+            if [ "$MEMBER_COUNT" = "3" ]; then
+              echo "Management Center monitoring 3 members!"
+              break
+            else
+              echo "Waiting for management center to find all 3 members..." && sleep 4
+              if [ "$i" = "5" ]; then
+                echo "Management center could not find all 3 members!"
+                kubectl get pods
+                echo ""
+                kubectl logs ${HZ_NAME}-${NAME}-mancenter-0
                 exit 1 
               fi
             fi
@@ -231,13 +240,11 @@ kubectl wait --for=condition=Ready --timeout=60s pod -l app.kubernetes.io/name=$
       - name: Copy operatorhub-bundle from the repo
         run: |
           cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle ./
-                ./
 
 
       - name: Build Operatorhub Bundle
         working-directory: .
         run: |
-          OPERATOR_NAME="${NAME}-operator"
           function run_sed_i {
             SED_SCRIPT=$1
             FILE=$2
@@ -246,16 +253,20 @@ kubectl wait --for=condition=Ready --timeout=60s pod -l app.kubernetes.io/name=$
 
           mkdir operatorhub-bundle-output
           mkdir operatorhub-bundle-output/${OPERATOR_VERSION}
+
           cp operatorhub-bundle/${OPERATOR_NAME}.vOPERATOR_VERSION.clusterserviceversion.yaml operatorhub-bundle-output/${OPERATOR_VERSION}/${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           cp operatorhub-bundle/${OPERATOR_NAME}.package-template.yaml operatorhub-bundle-output/${OPERATOR_NAME}.package.yaml
+
           CRD_NAME="${NAME//-}s"
           cp operatorhub-bundle/${CRD_NAME}.hazelcast.com.crd.yaml  operatorhub-bundle-output/${OPERATOR_VERSION}/${CRD_NAME}.hazelcast.com.crd.yaml
+
           cd operatorhub-bundle-output/${OPERATOR_VERSION}
           run_sed_i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           run_sed_i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           run_sed_i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           run_sed_i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+
           cd ..
           run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
 
@@ -266,14 +277,32 @@ kubectl wait --for=condition=Ready --timeout=60s pod -l app.kubernetes.io/name=$
           name: operator-hub-bundle
           path: ./operatorhub-bundle-output
 
+
       - name: Push to Dockerhub
         run: |
-            OPERATOR_NAME="${NAME}-operator"
-            OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
-            OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}"
+          docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+          docker push ${OPERATOR_IMAGE}
 
-            if [[ ! -z "${DOCKERHUB_USERNAME}" && ! -z "${DOCKERHUB_PASSWORD}" ]];
-            then
-              docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-              docker push ${OPERATOR_IMAGE}
-            fi
+      - name: Update Hazelcast Versions in the Repo
+        working-directory: ./hazelcast-repo
+        run: |
+          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i -e  "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
+
+          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+
+          sed -i -e "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+
+
+      - name: Commit changes done to hazelcast-operator
+        run: |
+          git config --global user.name 'devOpsHazelcast'
+          git config --global user.email 'devops@hazelcast.com'
+
+          git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+
+
+      - name: Push artifacts to guides-site repo
+        run: git push

@@ -225,8 +225,6 @@ spec:
   maintainers:
   - name: leszko
     email: rafal@hazelcast.com
-  - name: mesutcelik
-    email: mesut@hazelcast.com
   - name: hasancelik
     email: hasan@hazelcast.com
   provider:
