@@ -38,8 +38,8 @@ jobs:
       HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
       DEFAULT_HAZELCAST_VERSION: ${{ github.event.inputs.DEFAULT_HAZELCAST_VERSION }}
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
-      DOCKERHUB_USERNAME: ${{ github.secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ github.secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     runs-on: ubuntu-latest
     steps: 
