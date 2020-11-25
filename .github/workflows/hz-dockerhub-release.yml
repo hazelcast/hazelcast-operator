@@ -208,7 +208,7 @@ jobs:
                 exit 1
               fi
             else
-              echo "hz-${NAME}-2 is ready!"
+              echo "${HZ_NAME}-${NAME}-2 is ready!"
               break
             fi
           done
