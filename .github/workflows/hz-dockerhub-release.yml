@@ -194,7 +194,7 @@ jobs:
 
       - name: Validate Cluster Size
         run: |
-          HZ_NAME = grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml
+          HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
           
           #WAIT FOR hz-hazelcast-2 TO BE READY
           kubectl wait --for=condition=Ready --timeout=150s pod/${HZ_NAME}-${NAME}-2 
