@@ -45,7 +45,7 @@ jobs:
       RHEL_BUNDLE_REPOSITORY: ${{ secrets.RHEL_BUNDLE_REPOSITORY }}
       RHEL_API_KEY:  ${{ secrets.RHEL_API_KEY }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps: 
       - name: Check Docker 
         run: docker --version
