@@ -238,7 +238,7 @@ jobs:
 
       - name: Validate Cluster Size
         run: |
-          HZ_NAME =$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
+          HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
           
           #WAIT FOR hz-hazelcast-enterprise-2 TO BE READY
           for i in `seq 1 10`; do
