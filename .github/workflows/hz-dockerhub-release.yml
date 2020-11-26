@@ -82,11 +82,6 @@ jobs:
       - name: Overwrite Helm-chart template files
         working-directory: ./WORKDIR
         run: |
-          function run_sed_i {
-            SED_SCRIPT=$1
-            FILE=$2
-            sed -i'' "$1" $2
-          } 
           cat <<'EOF' > new_image_block
                   {{- if and (.Values.image.repository ) (.Values.image.tag) }}
                   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -94,8 +89,8 @@ jobs:
                   image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
           rm new_image_block
 
           cat <<'EOF' > new_mc_image_block
@@ -105,12 +100,12 @@ jobs:
                   image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           rm new_mc_image_block
 
-          run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
-          run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
 
       - name: Upload updated Helm-Charts
@@ -144,7 +139,7 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
-          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
+          sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
       - name: Update Hazelcast-operator files for testing
