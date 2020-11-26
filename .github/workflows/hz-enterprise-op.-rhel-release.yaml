@@ -78,6 +78,12 @@ jobs:
           /opm version
 
 
+      - name: Checkout to hazelcast-operator
+        uses: actions/checkout@v2
+        with:
+          path: operator-repo
+
+
       - name: Download Hazelcast Helm Chart
         run: |
           mkdir WORKDIR
