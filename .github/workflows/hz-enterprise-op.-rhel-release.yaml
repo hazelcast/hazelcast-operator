@@ -374,13 +374,13 @@ jobs:
           # sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
 
-      - name: Commit changes done to hazelcast-operator
+      - name: Commit changes done to hazelcast-enterprise-operator
         run: |
           # git config --global user.name 'devOpsHazelcast'
           # git config --global user.email 'devops@hazelcast.com'
           # git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New operator and operator-bundle images are released on RHEL registry."
 
 
-      - name: Push changes done to hazelcast-operator
+      - name: Push changes done to hazelcast-enterprise-operator
         run: |
           # `git push
