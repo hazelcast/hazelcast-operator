@@ -224,6 +224,7 @@ jobs:
 
           kubectl apply -f hazelcast.yaml
         
+
       - name: Print log of the Hazelcast-Enterprise-Operator
         run: |
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
@@ -321,7 +322,7 @@ jobs:
           
           echo "Building the RHEL-bundle image..."
           docker build -t ${RHEL_BUNDLE_IMAGE} -f bundle.Dockerfile .
-          
+          docker images
       
       - name: Upload Operator-Bundle 
         uses: actions/upload-artifact@v2
