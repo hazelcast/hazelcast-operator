@@ -199,7 +199,7 @@ jobs:
       - name: Upload Hazelcast-enterprise-operator files
         uses: actions/upload-artifact@v2
         with:
-          name: hazelcast-operator
+          name: hazelcast-enterprise-operator
           path: ./hazelcast-enterprise-operator
 
 
@@ -361,7 +361,7 @@ jobs:
 
 
       - name: Update Hazelcast Versions in the Repo
-        working-directory: ./hazelcast-repo
+        working-directory: ./operator-repo
         run: |
           # RESGISTRY_NAME=registry.connect.redhat.com/hazelcast
           # sed -i -e  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
