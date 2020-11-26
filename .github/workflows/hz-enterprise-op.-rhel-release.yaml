@@ -311,12 +311,12 @@ jobs:
           cp hazelcastenterprises.hazelcast.com.crd.yaml ${OPERATOR_VERSION}/
           cp hazelcast-enterprise-operator.package-template.yaml hazelcast-enterprise-certified.package.yaml
 
-          run_sed_i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" hazelcast-enterprise-certified.package.yaml
+          sed -i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" hazelcast-enterprise-certified.package.yaml
 
           echo "Creating bundle artifacts..."
           opm alpha bundle generate -d ./${OPERATOR_VERSION}/ -u ./${OPERATOR_VERSION}/
