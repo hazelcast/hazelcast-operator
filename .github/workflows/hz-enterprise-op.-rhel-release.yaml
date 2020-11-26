@@ -100,11 +100,6 @@ jobs:
       - name: Overwrite template values
         working-directory: ./WORKDIR
         run: |
-          function run_sed_i {
-            SED_SCRIPT=$1
-            FILE=$2
-            sed -i'' "$1" $2
-          } 
           cat <<'EOF' > new_image_block
                   {{- if and (.Values.image.repository ) (.Values.image.tag) }}
                   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -112,8 +107,8 @@ jobs:
                   image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
           rm new_image_block
           cat <<'EOF' > new_mc_image_block
                   {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
@@ -122,12 +117,12 @@ jobs:
                   image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           rm new_mc_image_block
 
-          run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
-          run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
 
       - name: Upload Helm Charts
@@ -180,7 +175,7 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
-          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
+          sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
       - name: Update Hazelcast Enterprise Operator files
@@ -188,12 +183,12 @@ jobs:
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
           REGISTRY_NAME=registry.connect.redhat.com/hazelcast
-          sed -i -e  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i -e  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
 
       - name: Upload Hazelcast-enterprise-operator files
@@ -222,7 +217,7 @@ jobs:
 
           #PUT LICENCE KEY IN secret.yaml
           LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
-          sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
+          sed -i  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
           kubectl apply -f secret.yaml
           
           #WAIT FOR OPERATOR TO BE READY
@@ -364,14 +359,14 @@ jobs:
         working-directory: ./operator-repo
         run: |
           # RESGISTRY_NAME=registry.connect.redhat.com/hazelcast
-          # sed -i -e  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          # sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          # sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          # sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
           
-          # sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          # sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          # sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          # sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          # sed -i -e "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          # sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          # sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+          # sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
 
       - name: Commit changes done to hazelcast-enterprise-operator
