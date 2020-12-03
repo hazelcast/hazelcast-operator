@@ -182,15 +182,18 @@ jobs:
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+
           REGISTRY_NAME=registry.connect.redhat.com/hazelcast
           sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-
-
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}//operator-rhel.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
+          
       - name: Upload Hazelcast-enterprise-operator files
         uses: actions/upload-artifact@v2
         with:
@@ -328,7 +331,7 @@ jobs:
       - name: Upload Operator-Bundle 
         uses: actions/upload-artifact@v2
         with:
-          name: hz-enterprise-operator-bundle
+          name: hz-enterprise-rhel-operator-bundle
           path: ./rhel-operator-bundle
 
 
@@ -358,24 +361,28 @@ jobs:
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
-          # RESGISTRY_NAME=registry.connect.redhat.com/hazelcast
-          # sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          # sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-          
           # sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           # sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          # sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          # sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          # REGISTRY_NAME=registry.connect.redhat.com/hazelcast
+          # sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          # sed -i  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          # sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
+          # linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}//operator-rhel.yaml))
+          # sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
+          # sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
+          
 
       - name: Commit changes done to hazelcast-enterprise-operator
+        working-directory: ./operator-repo
         run: |
           # git config --global user.name 'devOpsHazelcast'
           # git config --global user.email 'devops@hazelcast.com'
           # git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New operator and operator-bundle images are released on RHEL registry."
 
 
-      - name: Push changes done to hazelcast-enterprise-operator
+      - name: Push changes to hazelcast-enterprise-operator
+        working-directory: ./operator-repo
         run: |
           # `git push
