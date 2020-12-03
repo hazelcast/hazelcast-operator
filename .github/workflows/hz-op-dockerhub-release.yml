@@ -1,4 +1,4 @@
-name: test-final
+name: hz-operator-dockerhub-autorelease
 on:
   workflow_dispatch:
     inputs:
@@ -177,7 +177,7 @@ jobs:
 
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          
+
           sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
@@ -284,7 +284,7 @@ jobs:
 
       - name: Push to Dockerhub
         run: |
-          docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+          echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME}
           docker push ${OPERATOR_IMAGE}
 
 
