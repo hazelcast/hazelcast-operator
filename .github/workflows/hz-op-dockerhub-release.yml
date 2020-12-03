@@ -42,8 +42,7 @@ jobs:
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE}}
-
+      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
     runs-on: ubuntu-latest
     steps: 
       - name: Check Docker 
@@ -175,9 +174,6 @@ jobs:
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-
           sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
@@ -278,17 +274,17 @@ jobs:
       - name: Upload Operatorhub bundle
         uses: actions/upload-artifact@v2
         with:
-          name: operator-hub-bundle
+          name: operatorhub-bundle
           path: ./operatorhub-bundle-output
 
 
-      - name: Push to Dockerhub
+      - name: Push Hazelcast-Operator to Dockerhub
         run: |
-          echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME}
+          docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
           docker push ${OPERATOR_IMAGE}
 
 
-      - name: Update Hazelcast versions in the repo
+      - name: Update Hazelcast versions in the repo Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
@@ -311,16 +307,51 @@ jobs:
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
-          git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id}}
+          git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
+          git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
-      - name: Create a PR for changes done to Hazelcast-Operator
+
+      - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           echo ${{ github.token }} | gh auth login --with-token
-          git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id}}
+
           gh pr create \
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
+
+
+      - name: Checkout to devOpsHelm/community-operators
+        uses: actions/checkout@v2
+        with:
+          repository: devOpsHelm/community-operators
+          path: community-operators
+          token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
+
+          
+      - name: Create a PR for Operatorhub-bundle
+        working-directory: community-operators
+        run: |
+          REPO_OWNER=operator-framework
+          REPO_NAME=community-operators
+
+          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
+
+          git add  ./upstream-community-operators/${OPERATOR_NAME}
+
+          git commit -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+
+          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
+
+          gh pr create  \
+              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --repo $REPO_OWNER/$REPO_NAME
+
