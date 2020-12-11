@@ -63,6 +63,13 @@ jobs:
           rm oc.tar.gz
           sudo mv oc /oc
           /oc version
+      
+      
+      - name: Install expect
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y expect 
+          expect -version
 
 
       - name: Checkout to Hazelcast-Operator
@@ -350,14 +357,11 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          gh pr create  \
-              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
-              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
-              --repo $REPO_OWNER/$REPO_NAME
+          source ./operator-repo/.github/scripts/expect.sh
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
-        if: ${{ env.NAME == "hazelcast" }}
+        if: ${{ env.NAME }} == "hazelcast" 
         working-directory: community-operators
         run: |
           REPO_OWNER=operator-framework
@@ -375,7 +379,4 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          gh pr create  \
-              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
-              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
-              --repo $REPO_OWNER/$REPO_NAME
+          source ./operator-repo/.github/scripts/expect.sh
