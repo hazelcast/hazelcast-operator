@@ -158,7 +158,7 @@ jobs:
           echo "OPERATOR_REPOSITORY=${OPERATOR_REPOSITORY}" >> $GITHUB_ENV
           echo "OPERATOR_IMAGE=${OPERATOR_IMAGE}" >> $GITHUB_ENV
           
-          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --crd-version=v1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
           cd ${OPERATOR_NAME}
           cat >> watches.yaml <<EOL
             overrideValues:
@@ -361,7 +361,7 @@ jobs:
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
-        if: ${{ env.NAME }} == "hazelcast" 
+        if: env.NAME != 'hazelcast-enterprise'
         working-directory: community-operators
         run: |
           export REPO_OWNER=operator-framework
