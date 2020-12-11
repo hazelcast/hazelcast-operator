@@ -67,21 +67,12 @@ jobs:
           /operator-sdk version
 
 
-      - name: Install oc
-        run: |
-          curl -L -o ./oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
-          tar xvzf oc.tar.gz
-          rm oc.tar.gz
-          sudo mv oc /oc
-          /oc version
-
-
       - name: Install opm
         run: |
           set -x
           sudo apt-get update
           sudo apt-get install --only-upgrade libc6
-          /oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/opm:. --confirm
+          oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/opm:. --confirm
           chmod +x ./opm
           sudo mv opm /opm
           /opm version
@@ -233,19 +224,21 @@ jobs:
           
       - name: Deploy Hazelcast Cluster
         run: |
-          WORKDIR=./${OPERATOR_NAME}
+          WORKDIR=$(pwd)/${OPERATOR_NAME}
+          PROJECT=operator-rhel-release-test-${{ github.run_id }}
           ./operator-repo/.github/scripts/smoke-test.sh \
                         "$WORKDIR"  \
                         "$PROJECT"  \
                         "$HZ_ENTERPRISE_LICENSE" \
-                        "$LOGIN_USERNAME" \
-                        "$LOGIN_PASSWORD" \
+                        "$REDHAT_LOGIN_USERNAME" \
+                        "$REDHAT_LOGIN_PASSWORD" \
                         "$OCP_CLUSTER_URL" \
                         "$RHEL_REPO_PASSWORD" \
                         "$CLUSTER_SIZE" \
                         "$MANCENTER_SIZE" 
+      
+          oc wait --for=condition=Ready --timeout=120s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
         env:
-          PROJECT: operator-rhel-release-test
           CLUSTER_SIZE: 3
           MANCENTER_SIZE: 1
 
@@ -258,8 +251,6 @@ jobs:
       - name: Validate Cluster Size
         run: |
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
-
-          oc wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
           
           source ./operator-repo/.github/scripts/cluster-verification.sh
 
@@ -267,7 +258,7 @@ jobs:
 
           verify_cluster_size $CLUSTER_SIZE
 
-          oc wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
+          oc wait --for=condition=Ready --timeout=120s pod ${HZ_NAME}-${NAME}-mancenter-0
 
           verify_management_center $CLUSTER_SIZE
         env:
@@ -276,11 +267,11 @@ jobs:
 
 
       - name: Clean up After Test
+        if: always()
         run: |
-          WORKDIR=./${OPERATOR_NAME}
+          WORKDIR=$(pwd)/${OPERATOR_NAME}
+          PROJECT=operator-rhel-release-test-${{ github.run_id }}
           ./operator-repo/.github/scripts/clean-up.sh $WORKDIR $PROJECT
-        env:
-          PROJECT: operator-rhel-release-test
 
 
       - name: Copy rhel-operator-bundle from the repo
@@ -372,10 +363,14 @@ jobs:
         working-directory: ./operator-repo
         run: |
           BRANCH_NAME=${OPERATOR_NAME}-RHEL-file-updates-${{ github.run_id }}
+
           git config --global user.name 'devOpsHelm'
           git config --global user.email 'devops+1@hazelcast.com'
+          
           git checkout -b $BRANCH_NAME
+
           git commit --signoff -am "${OPERATOR_NAME} for RHEL is updated to version: ${OPERATOR_VERSION}. Operator and bundle images are published on RHEL registry."
+          
           git push -u origin $BRANCH_NAME
 
 
