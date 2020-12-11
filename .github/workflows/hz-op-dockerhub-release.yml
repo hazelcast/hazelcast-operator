@@ -54,15 +54,6 @@ jobs:
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
           /operator-sdk version
-
-
-      - name: Install oc
-        run: |
-          curl -L -o ./oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
-          tar xvzf oc.tar.gz
-          rm oc.tar.gz
-          sudo mv oc /oc
-          /oc version
       
       
       - name: Install expect
@@ -218,7 +209,7 @@ jobs:
           kubectl --validate=false apply -f ${OPERATOR_YAML_NAME}.yaml
 
           #WAIT FOR OPERATOR TO BE READY
-          kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
+          kubectl wait --for=condition=Ready --timeout=120s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
 
           if [ "${NAME}" = "hazelcast-enterprise" ]; then
             LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
@@ -245,7 +236,7 @@ jobs:
 
           verify_cluster_size $CLUSTER_SIZE
 
-          kubectl wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
+          kubectl wait --for=condition=Ready --timeout=120s pod ${HZ_NAME}-${NAME}-mancenter-0
 
           verify_management_center $CLUSTER_SIZE
 
