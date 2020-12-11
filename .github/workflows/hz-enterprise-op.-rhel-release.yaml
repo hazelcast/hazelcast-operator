@@ -5,11 +5,11 @@ on:
       OPERATOR_VERSION:
         description: 'OPERATOR_VERSION'     
         required: true
-        default: '0.3.3'
+        default: '0.3.4'
       PREVIOUS_OPERATOR_VERSION:
         description: 'PREVIOUS_OPERATOR_VERSION'     
         required: true
-        default: '0.3.2' 
+        default: '0.3.3' 
       HELM_CHART_VERSION:
         description: 'HELM_CHART_VERSION'     
         required: true
@@ -17,11 +17,15 @@ on:
       DEFAULT_HAZELCAST_VERSION:
         description: 'DEFAULT_HAZELCAST_VERSION'     
         required: true
-        default: '4.0.3'
+        default: '4.1'
       DEFAULT_MANCENTER_VERSION:
         description: 'DEFAULT_MANCENTER_VERSION'     
         required: true
-        default: '4.2020.08'
+        default: '4.2020.10'
+      TIMEOUT_IN_MINS:
+        description: 'TIMEOUT_IN_MINS'     
+        required: true
+        default: '60'
 
 jobs:
   build:
@@ -33,12 +37,17 @@ jobs:
       KIND: "HazelcastEnterprise"
       NAME: "hazelcast-enterprise"
       REPO: "rhel"
+      SCAN_REGISTRY: "scan.connect.redhat.com"
       OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
       PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
       HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
       DEFAULT_HAZELCAST_VERSION: ${{ github.event.inputs.DEFAULT_HAZELCAST_VERSION }}
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
+      TIMEOUT_IN_MINS: ${{ github.event.inputs.TIMEOUT_IN_MINS }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
+      REDHAT_LOGIN_USERNAME: ${{ secrets.REDHAT_LOGIN_USERNAME }}
+      REDHAT_LOGIN_PASSWORD: ${{ secrets.REDHAT_LOGIN_PASSWORD }}
+      OCP_CLUSTER_URL: ${{ secrets.OCP_CLUSTER_URL }}
       RHEL_REPO_PASSWORD: ${{ secrets.RHEL_REPO_PASSWORD }}
       RHEL_BUNDLE_PASSWORD: ${{ secrets.RHEL_BUNDLE_PASSWORD }}
       RHEL_REPOSITORY: ${{ secrets.RHEL_REPOSITORY }}
@@ -182,18 +191,23 @@ jobs:
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s__tag: ${DEFAULT_HAZELCAST_VERSION}_" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          REGISTRY_NAME=registry.connect.redhat.com/hazelcast
-          sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "0,/repository: .*/s||repository: ${RHEL_HAZELCAST_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/repository: /! s|repository: .*|repository: ${RHEL_MANCENTER_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
+
+          sed -i  "s|image: .*|image: ${RHEL_IMAGE}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}//operator-rhel.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
-          
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+        env: 
+          RHEL_HAZELCAST_REPO: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8
+          RHEL_MANCENTER_REPO: registry.connect.redhat.com/hazelcast/management-center-4-rhel8
+
+
       - name: Upload Hazelcast-enterprise-operator files
         uses: actions/upload-artifact@v2
         with:
@@ -201,33 +215,40 @@ jobs:
           path: ./hazelcast-enterprise-operator
 
 
-      - name: Set up Kubernetes in Docker
-        uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: "v0.7.0"
+      - name: Push Hazelcast-Enterprise-Operator image to RHEL scan registry
+        run: |
+          docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_REPO_PASSWORD}
+          docker tag ${OPERATOR_IMAGE} ${RHEL_IMAGE}
+          docker push ${RHEL_IMAGE}
 
 
+      - name: Wait for Scan to Complete
+        run: |
+          PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
+          VERSION=${OPERATOR_VERSION}
+          source ./operator-repo/.github/scripts/publish-rhel.sh
+
+          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
+        
+          
       - name: Deploy Hazelcast Cluster
         run: |
-          cd ./${OPERATOR_NAME}
+          WORKDIR=./${OPERATOR_NAME}
+          ./operator-repo/.github/scripts/smoke-test.sh \
+                        "$WORKDIR"  \
+                        "$PROJECT"  \
+                        "$HZ_ENTERPRISE_LICENSE" \
+                        "$LOGIN_USERNAME" \
+                        "$LOGIN_PASSWORD" \
+                        "$OCP_CLUSTER_URL" \
+                        "$RHEL_REPO_PASSWORD" \
+                        "$CLUSTER_SIZE" \
+                        "$MANCENTER_SIZE" 
+        env:
+          PROJECT: operator-rhel-release-test
+          CLUSTER_SIZE: 3
+          MANCENTER_SIZE: 1
 
-          kind load docker-image ${OPERATOR_IMAGE}
-
-          kubectl apply -f operator-rbac.yaml
-          kubectl apply -f hazelcast-rbac.yaml
-          kubectl apply -f hazelcastcluster.crd.yaml
-          kubectl --validate=false apply -f operator-docker-hub.yaml
-
-          #PUT LICENCE KEY IN secret.yaml
-          LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
-          sed -i  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
-          kubectl apply -f secret.yaml
-          
-          #WAIT FOR OPERATOR TO BE READY
-          kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
-
-          kubectl apply -f hazelcast.yaml
-        
 
       - name: Print log of the Hazelcast-Enterprise-Operator
         run: |
@@ -237,59 +258,29 @@ jobs:
       - name: Validate Cluster Size
         run: |
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
+
+          oc wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
           
-          #WAIT FOR hz-hazelcast-enterprise-2 TO BE READY
-          for i in `seq 1 10`; do
-            if [[ $(kubectl get pods ${HZ_NAME}-${NAME}-2 -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; then
-              echo "waiting for pod ${HZ_NAME}-${NAME}-2 to be ready..." && sleep 15
-              if [ "$i" = "10" ]; then
-                echo "${HZ_NAME}-${NAME}-2 pod failed to be ready!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-2
-                exit 1
-              fi
-            else
-              echo "${HZ_NAME}-${NAME}-2 is ready!"
-              break
-            fi
-          done
+          source ./operator-repo/.github/scripts/cluster-verification.sh
 
-          #WAIT FOR CLUSTER SIZE TO BE 3
-          for i in `seq 1 5`; do
-            num=$(kubectl logs ${HZ_NAME}-${NAME}-2 | grep "Members {size:3, ver:3}" | wc -l)
-            if [ "$num" = "1" ]; then
-              echo "Hazelcast cluster size is 3!"
-              break
-            else
-              echo "Waiting for cluster size to be 3..." && sleep 4
-              if [ "$i" = "5" ]; then
-                echo "Hazelcast cluster size is not 3!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-2 
-                exit 1 
-              fi
-            fi
-          done
+          wait_for_last_member_initialization $CLUSTER_SIZE
 
-          #CHECK IF ALL MEMBERS CAN COMMUNICATE WITH MANAGEMENT CENTER
-          for i in `seq 1 5`; do
-            MEMBER_COUNT=$(kubectl logs ${HZ_NAME}-${NAME}-mancenter-0 | grep -E "Started communication with (a new )?member" | wc -l)
-            if [ "$MEMBER_COUNT" = "3" ]; then
-              echo "Management Center monitoring 3 members!"
-              break
-            else
-              echo "Waiting for management center to find all 3 members..." && sleep 4
-              if [ "$i" = "5" ]; then
-                echo "Management center could not find all 3 members!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-mancenter-0
-                exit 1 
-              fi
-            fi
-          done
+          verify_cluster_size $CLUSTER_SIZE
+
+          oc wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
+
+          verify_management_center $CLUSTER_SIZE
+        env:
+          CLUSTER_SIZE: 3
+          MANCENTER_SIZE: 1
+
+
+      - name: Clean up After Test
+        run: |
+          WORKDIR=./${OPERATOR_NAME}
+          ./operator-repo/.github/scripts/clean-up.sh $WORKDIR $PROJECT
+        env:
+          PROJECT: operator-rhel-release-test
 
 
       - name: Copy rhel-operator-bundle from the repo
@@ -326,8 +317,8 @@ jobs:
           
           echo "Building the RHEL-bundle image..."
           docker build -t ${RHEL_BUNDLE_IMAGE} -f bundle.Dockerfile .
-          docker images
-      
+
+          
       - name: Upload Operator-Bundle 
         uses: actions/upload-artifact@v2
         with:
@@ -337,52 +328,61 @@ jobs:
 
       - name: Push Operator-Bundle image to RHEL scan registry
         run: |
-          # echo "Pushing the image to RHEL Registry..."
-          # docker login scan.connect.redhat.com -u unused -p ${RHEL_BUNDLE_PASSWORD}
-          # docker push ${RHEL_BUNDLE_IMAGE}
+          docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_BUNDLE_PASSWORD}
+          docker push ${RHEL_BUNDLE_IMAGE}
           
-          # BUNDLE_PROJECT_ID=$( echo ${RHEL_BUNDLE_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ./operator-repo/.github/publish.rhel.sh ${RHEL_API_KEY} ${BUNDLE_PROJECT_ID} ${OPERATOR_VERSION}
-          
-
-      - name: Push Hazelcast-Enterprise-Operator image to RHEL scan registry
-        run: |
-          # docker login scan.connect.redhat.com -u unused -p ${RHEL_REPO_PASSWORD}
-          # docker tag ${OPERATOR_IMAGE} ${RHEL_IMAGE}
-          # docker push ${OPERATOR_IMAGE}
-
           
       - name: Publish the Hazelcast-Enterprise-Operator image
         run: |
-          # PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ../operator-repo/.github/publish.rhel.sh ${RHEL_API_KEY} ${PROJECT_ID} ${OPERATOR_VERSION}
+          PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
+          VERSION=${OPERATOR_VERSION}
+          source ./operator-repo/.github/scripts/publish-rhel.sh
 
+          wait_for_container_build_or_scan TIMEOUT_IN_MINS
+          publish_the_image
+
+
+      - name: Publish Operator-Bundle image
+        run: |
+          PROJECT_ID=$( echo ${RHEL_BUNDLE_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
+          VERSION=${OPERATOR_VERSION}
+          source ./operator-repo/.github/scripts/publish-rhel.sh
+
+          wait_for_container_build_or_scan TIMEOUT_IN_MINS
+          publish_the_image
+          
 
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
-          # sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          # sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          # REGISTRY_NAME=registry.connect.redhat.com/hazelcast
-          # sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          # sed -i  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-rhel.yaml
-          # sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          # linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}//operator-rhel.yaml))
-          # sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
-          # sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}//operator-rhel.yaml
-          
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+        env: 
+          REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
-      - name: Commit changes done to hazelcast-enterprise-operator
+
+      - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
-          # git config --global user.name 'devOpsHazelcast'
-          # git config --global user.email 'devops@hazelcast.com'
-          # git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New operator and operator-bundle images are released on RHEL registry."
+          BRANCH_NAME=${OPERATOR_NAME}-RHEL-file-updates-${{ github.run_id }}
+          git config --global user.name 'devOpsHelm'
+          git config --global user.email 'devops+1@hazelcast.com'
+          git checkout -b $BRANCH_NAME
+          git commit --signoff -am "${OPERATOR_NAME} for RHEL is updated to version: ${OPERATOR_VERSION}. Operator and bundle images are published on RHEL registry."
+          git push -u origin $BRANCH_NAME
 
 
-      - name: Push changes to hazelcast-enterprise-operator
+      - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
-          # `git push
+          echo ${{ github.token }} | gh auth login --with-token
+          gh pr create \
+              --title "Update versions after release of RHEL ${OPERATOR_IMAGE}" \
+              --body "Released ${OPERATOR_IMAGE} on RHEL. New operator and operator-bundle images are released on RHEL registry. "
