@@ -33,7 +33,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v0.17.2"
+      OPERATOR_SDK_VERSION: "v0.19.2"
       KIND: "HazelcastEnterprise"
       NAME: "hazelcast-enterprise"
       REPO: "rhel"
@@ -156,7 +156,7 @@ jobs:
           echo "RHEL_IMAGE=${RHEL_IMAGE}" >> $GITHUB_ENV
           echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
 
-          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --crd-version=v1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
           cd ${OPERATOR_NAME}
 
           cat >> watches.yaml <<EOL
