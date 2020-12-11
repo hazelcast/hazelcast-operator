@@ -332,13 +332,13 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
           
-      - name: Create a PR for Operatorhub-bundle
+      - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
         working-directory: community-operators
         run: |
           REPO_OWNER=operator-framework
           REPO_NAME=community-operators
 
-          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+          git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
 
@@ -346,7 +346,7 @@ jobs:
 
           git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
-          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+          git push -u origin ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
@@ -355,3 +355,27 @@ jobs:
               --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
               --repo $REPO_OWNER/$REPO_NAME
 
+
+      - name: Create a PR for Operatorhub-bundle, path community-operators
+        if: ${{ env.NAME == "hazelcast" }}
+        working-directory: community-operators
+        run: |
+          REPO_OWNER=operator-framework
+          REPO_NAME=community-operators
+
+          git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          cp -r ../operatorhub-bundle-output/* ./community-operators/${OPERATOR_NAME}/
+
+          git add  ./community-operators/${OPERATOR_NAME}
+
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+
+          git push -u origin ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
+
+          gh pr create  \
+              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --repo $REPO_OWNER/$REPO_NAME
