@@ -2,7 +2,7 @@
 
 set timeout -1
 
-spawn gh pr create --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" --repo $REPO_OWNER/$REPO_NAME
+spawn gh pr create --title "Update $::env(OPERATOR_NAME) to $::env(OPERATOR_VERSION)" --repo $::env(REPO_OWNER)/$::env(REPO_NAME)
 
 expect "Body"
 

@@ -33,7 +33,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v0.17.2"
+      OPERATOR_SDK_VERSION: "v0.19.2"
       NAME: ${{ github.event.inputs.NAME }}
       OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
       PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
@@ -311,8 +311,8 @@ jobs:
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
-          git config --global user.name 'devOpsHazelcast'
-          git config --global user.email 'devops@hazelcast.com'
+          git config --global user.name 'devOpsHelm'
+          git config --global user.email 'devops+1@hazelcast.com'
 
           git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
@@ -342,8 +342,8 @@ jobs:
       - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
         working-directory: community-operators
         run: |
-          REPO_OWNER=operator-framework
-          REPO_NAME=community-operators
+          export REPO_OWNER=operator-framework
+          export REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
@@ -357,15 +357,15 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          source ./operator-repo/.github/scripts/expect.sh
+          ../operator-repo/.github/scripts/expect.sh
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
         if: ${{ env.NAME }} == "hazelcast" 
         working-directory: community-operators
         run: |
-          REPO_OWNER=operator-framework
-          REPO_NAME=community-operators
+          export REPO_OWNER=operator-framework
+          export REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
 
@@ -379,4 +379,4 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          source ./operator-repo/.github/scripts/expect.sh
+          ../operator-repo/.github/scripts/expect.sh
