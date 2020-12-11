@@ -317,12 +317,6 @@ jobs:
           path: ./rhel-operator-bundle
 
 
-      - name: Push Operator-Bundle image to RHEL scan registry
-        run: |
-          docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_BUNDLE_PASSWORD}
-          docker push ${RHEL_BUNDLE_IMAGE}
-          
-          
       - name: Publish the Hazelcast-Enterprise-Operator image
         run: |
           PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
@@ -331,6 +325,12 @@ jobs:
 
           wait_for_container_build_or_scan TIMEOUT_IN_MINS
           publish_the_image
+
+          
+      - name: Push Operator-Bundle image to RHEL scan registry
+        run: |
+          docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_BUNDLE_PASSWORD}
+          docker push ${RHEL_BUNDLE_IMAGE}
 
 
       - name: Publish Operator-Bundle image
