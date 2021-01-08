@@ -162,8 +162,8 @@ jobs:
 
           cat >> ./build/Dockerfile <<EOL
           LABEL name="Hazelcast-Enterprise Operator" \\
-                maintainer="connect-tech@redhat.com" \\
-                vendor="RHC" \\
+                maintainer="info@hazelcast.com" \\
+                vendor="Hazelcast, Inc." \\
                 version="${OPERATOR_VERSION}" \\
                 release="v1" \\
                 summary="Hazelcast Enterprise Operator" \\
