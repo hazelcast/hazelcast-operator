@@ -323,7 +323,7 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan TIMEOUT_IN_MINS
+          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
           publish_the_image
 
           
@@ -339,7 +339,7 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan TIMEOUT_IN_MINS
+          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
           publish_the_image
           
 
