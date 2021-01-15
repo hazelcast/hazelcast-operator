@@ -13,15 +13,15 @@ on:
       HELM_CHART_VERSION:
         description: 'HELM_CHART_VERSION'     
         required: true
-        default: '3.5.0'
-      DEFAULT_HAZELCAST_VERSION:
-        description: 'DEFAULT_HAZELCAST_VERSION'     
+        default: '3.5.2'
+      HAZELCAST_VERSION:
+        description: 'HAZELCAST_VERSION'     
         required: true
-        default: '4.1'
-      DEFAULT_MANCENTER_VERSION:
-        description: 'DEFAULT_MANCENTER_VERSION'     
+        default: '4.1.1'
+      MANCENTER_VERSION:
+        description: 'MANCENTER_VERSION'     
         required: true
-        default: '4.2020.10'
+        default: '4.2020.12'
       TIMEOUT_IN_MINS:
         description: 'TIMEOUT_IN_MINS'     
         required: true
@@ -33,7 +33,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v0.19.2"
+      OPERATOR_SDK_VERSION: "v1.3.0"
       KIND: "HazelcastEnterprise"
       NAME: "hazelcast-enterprise"
       REPO: "rhel"
@@ -41,8 +41,8 @@ jobs:
       OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
       PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
       HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
-      DEFAULT_HAZELCAST_VERSION: ${{ github.event.inputs.DEFAULT_HAZELCAST_VERSION }}
-      DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
+      HAZELCAST_VERSION: ${{ github.event.inputs.HAZELCAST_VERSION }}
+      MANCENTER_VERSION: ${{ github.event.inputs.MANCENTER_VERSION }}
       TIMEOUT_IN_MINS: ${{ github.event.inputs.TIMEOUT_IN_MINS }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
       REDHAT_LOGIN_USERNAME: ${{ secrets.REDHAT_LOGIN_USERNAME }}
@@ -62,7 +62,7 @@ jobs:
 
       - name: Install Operator-Sdk
         run: |
-          sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
+          sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64"
           sudo chmod +x /operator-sdk
           /operator-sdk version
 
@@ -147,8 +147,8 @@ jobs:
           echo "RHEL_IMAGE=${RHEL_IMAGE}" >> $GITHUB_ENV
           echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
 
-          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --crd-version=v1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
-          cd ${OPERATOR_NAME}
+          /operator-sdk init --plugins=helm --domain=''
+          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
 
           cat >> watches.yaml <<EOL
             overrideValues:
@@ -158,9 +158,9 @@ jobs:
               mancenter.image.tagOverride: \${MC_IMAGE_TAG}
           EOL
 
-          cp -r ../../operator-repo/.github/operator-release-files/licenses ./
+          cp -r ../operator-repo/.github/operator-release-files/licenses ./
 
-          cat >> ./build/Dockerfile <<EOL
+          cat >> Dockerfile <<EOL
           LABEL name="Hazelcast-Enterprise Operator" \\
                 maintainer="info@hazelcast.com" \\
                 vendor="Hazelcast, Inc." \\
@@ -173,17 +173,17 @@ jobs:
           EOL
 
           echo "Building the operator image ${OPERATOR_IMAGE}"
-          /operator-sdk build ${OPERATOR_IMAGE}
+          make docker-build  IMG=${OPERATOR_IMAGE}
 
-          sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
+          #sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
       - name: Update Hazelcast Enterprise Operator files
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i "0,/tag: .*/s__tag: ${DEFAULT_HAZELCAST_VERSION}_" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s__tag: ${HAZELCAST_VERSION}_" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "0,/repository: .*/s||repository: ${RHEL_HAZELCAST_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/repository: /! s|repository: .*|repository: ${RHEL_MANCENTER_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
@@ -192,8 +192,8 @@ jobs:
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[2]}s/value: .*/value: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
         env: 
           RHEL_HAZELCAST_REPO: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8
           RHEL_MANCENTER_REPO: registry.connect.redhat.com/hazelcast/management-center-4-rhel8
@@ -293,8 +293,8 @@ jobs:
 
           sed -i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          sed -i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          sed -i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/HAZELCAST_IMAGE_VERSION/${HAZELCAST_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/MANCENTER_IMAGE_VERSION/${MANCENTER_VERSION}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           sed -i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_VERSION}/hazelcast-enterprise-operator.v${OPERATOR_VERSION}.clusterserviceversion.yaml
           sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" hazelcast-enterprise-certified.package.yaml
 
@@ -346,15 +346,15 @@ jobs:
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
-          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: ${HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[2]}s/value: .*/value: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
         env: 
           REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
