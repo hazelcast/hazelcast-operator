@@ -22,6 +22,7 @@ wait_for_last_member_initialization() {
     done
 }
 
+
 #CHECK IF CLUSTER SIZE IS CORRECT
 verify_cluster_size() {
     local SIZE=$1
