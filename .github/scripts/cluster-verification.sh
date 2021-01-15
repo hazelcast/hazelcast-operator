@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 #CHECK IF THE LAST MEMBER POD IS READY
 wait_for_last_member_initialization() {
     local SIZE=$1
