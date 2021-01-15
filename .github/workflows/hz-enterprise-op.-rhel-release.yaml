@@ -55,11 +55,7 @@ jobs:
       RHEL_API_KEY:  ${{ secrets.RHEL_API_KEY }}
 
     runs-on: ubuntu-20.04
-    steps: 
-      - name: Check Docker 
-        run: docker --version
-
-
+    steps:
       - name: Install Operator-Sdk
         run: |
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64"
@@ -174,8 +170,6 @@ jobs:
 
           echo "Building the operator image ${OPERATOR_IMAGE}"
           make docker-build  IMG=${OPERATOR_IMAGE}
-
-          #sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
       - name: Update Hazelcast Enterprise Operator files
