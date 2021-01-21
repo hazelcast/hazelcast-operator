@@ -366,3 +366,19 @@ jobs:
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           ../operator-repo/.github/scripts/expect.sh
+
+
+  slack_notify:
+    name: Slack
+    needs: build # set needs only last job except this job
+    runs-on: ubuntu-latest
+    if: always() # set always
+    steps:
+      - uses: 8398a7/action-slack@v3
+        with:
+          fields: repo,commit,author,action,eventName,workflow
+          status: ${{ needs.build.result }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
