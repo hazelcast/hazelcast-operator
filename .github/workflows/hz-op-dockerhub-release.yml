@@ -28,7 +28,8 @@ on:
         default: '4.2020.12'
 
 jobs:
-  build:
+  build_publish:
+    name: Build and Publish
     defaults:
       run:
         shell: bash
@@ -369,16 +370,17 @@ jobs:
 
 
   slack_notify:
-    name: Slack
-    needs: build # set needs only last job except this job
+    name: Slack Notify
+    needs: build_publish 
     runs-on: ubuntu-latest
-    if: always() # set always
+    if: always()
     steps:
       - uses: 8398a7/action-slack@v3
+        if: needs.build_publish.result != 'success'
         with:
           fields: repo,commit,author,action,eventName,workflow
-          status: ${{ needs.build.result }}
+          status: ${{ needs.build_publish.result }}
+          channel: '#github-actions-log'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
