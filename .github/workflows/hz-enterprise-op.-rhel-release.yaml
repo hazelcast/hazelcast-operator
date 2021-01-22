@@ -144,7 +144,7 @@ jobs:
           echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
 
           /operator-sdk init --plugins=helm --domain=''
-          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1beta1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
 
           cat >> watches.yaml <<EOL
             overrideValues:
