@@ -3,27 +3,27 @@ on:
   workflow_dispatch:
     inputs:
       OPERATOR_VERSION:
-        description: 'OPERATOR_VERSION'     
+        description: 'OPERATOR_VERSION'
         required: true
         default: '0.3.4'
       PREVIOUS_OPERATOR_VERSION:
-        description: 'PREVIOUS_OPERATOR_VERSION'     
+        description: 'PREVIOUS_OPERATOR_VERSION'
         required: true
-        default: '0.3.3' 
+        default: '0.3.3'
       HELM_CHART_VERSION:
-        description: 'HELM_CHART_VERSION'     
+        description: 'HELM_CHART_VERSION'
         required: true
         default: '3.5.2'
       HAZELCAST_VERSION:
-        description: 'HAZELCAST_VERSION'     
+        description: 'HAZELCAST_VERSION'
         required: true
         default: '4.1.1'
       MANCENTER_VERSION:
-        description: 'MANCENTER_VERSION'     
+        description: 'MANCENTER_VERSION'
         required: true
         default: '4.2020.12'
       TIMEOUT_IN_MINS:
-        description: 'TIMEOUT_IN_MINS'     
+        description: 'TIMEOUT_IN_MINS'
         required: true
         default: '60'
 
@@ -84,14 +84,14 @@ jobs:
         run: |
           mkdir WORKDIR
           cd WORKDIR
-          if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then 
-            echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded!" 
-          else 
-            echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded!" 
-          fi 
+          if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then
+            echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded!"
+          else
+            echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded!"
+          fi
           tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
           rm ${NAME}-${HELM_CHART_VERSION}.tgz
-      
+
 
       - name: Overwrite template values
         working-directory: ./WORKDIR
@@ -100,7 +100,7 @@ jobs:
                   {{- if and (.Values.image.repository ) (.Values.image.tag) }}
                   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
                   {{- else }}
-                  image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
+                  image: "{{ .Values.image.image }}"
                   {{- end }}
           EOF
           sed -i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
@@ -110,16 +110,22 @@ jobs:
                   {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
                   image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"
                   {{- else }}
-                  image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
+                  image: "{{ .Values.mancenter.image.image  }}"
                   {{- end }}
           EOF
           sed -i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           sed -i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           rm new_mc_image_block
 
-          sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
-          sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+          HZ_REPO=$(grep -oE "repository:(\s+\S+|\S+)" ${NAME}/values.yaml | awk '{print $2}' | head -n1 | sed 's/"//g')
+          HZ_TAG=$(grep -oE "tag:(\s+\S+|\S+)" ${NAME}/values.yaml | awk '{print $2}' | head -n1 | sed 's/"//g')
+          MC_REPO=$(grep -oE "repository:(\s+\S+|\S+)" ${NAME}/values.yaml | awk '{print $2}' | tail -n1 | sed 's/"//g')
+          MC_TAG=$(grep -oE "tag:(\s+\S+|\S+)" ${NAME}/values.yaml | awk '{print $2}' | tail -n1 | sed 's/"//g')
 
+          linesArray=($(sed -n  "/repository: .*/=" ${NAME}/values.yaml))
+          sed -i "${linesArray[0]}s|repository: .*|image: ${HZ_REPO}:${HZ_TAG}|" ${NAME}/values.yaml
+          sed -i "${linesArray[1]}s|repository: .*|image: ${MC_REPO}:${MC_TAG}|" ${NAME}/values.yaml
+          sed -i '/tag: .*/d' ${NAME}/values.yaml
 
       - name: Upload Helm Charts
         uses: actions/upload-artifact@v2
@@ -144,14 +150,12 @@ jobs:
           echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
 
           /operator-sdk init --plugins=helm --domain=''
-          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1beta1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
 
           cat >> watches.yaml <<EOL
             overrideValues:
-              image.repositoryOverride: \${HAZELCAST_IMAGE_REPOSITORY}
-              image.tagOverride: \${HAZELCAST_IMAGE_TAG}
-              mancenter.image.repositoryOverride: \${MC_IMAGE_REPOSITORY}
-              mancenter.image.tagOverride: \${MC_IMAGE_TAG}
+              image.image: \$RELATED_IMAGE_HAZELCAST
+              mancenter.image.image: \$RELATED_IMAGE_MANCENTER
           EOL
 
           cp -r ../operator-repo/.github/operator-release-files/licenses ./
@@ -185,10 +189,9 @@ jobs:
           sed -i  "s|image: .*|image: ${RHEL_IMAGE}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-        env: 
+          sed -i "s|${RHEL_HAZELCAST_REPO}:.*|${RHEL_HAZELCAST_REPO}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "s|${RHEL_MANCENTER_REPO}:.*|${RHEL_MANCENTER_REPO}:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+        env:
           RHEL_HAZELCAST_REPO: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8
           RHEL_MANCENTER_REPO: registry.connect.redhat.com/hazelcast/management-center-4-rhel8
 
@@ -214,8 +217,8 @@ jobs:
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
           wait_for_container_build_or_scan $TIMEOUT_IN_MINS
-        
-          
+
+
       - name: Deploy Hazelcast Cluster
         run: |
           WORKDIR=$(pwd)/${OPERATOR_NAME}
@@ -229,8 +232,8 @@ jobs:
                         "$OCP_CLUSTER_URL" \
                         "$RHEL_REPO_PASSWORD" \
                         "$CLUSTER_SIZE" \
-                        "$MANCENTER_SIZE" 
-      
+                        "$MANCENTER_SIZE"
+
           oc wait --for=condition=Ready --timeout=120s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
         env:
           CLUSTER_SIZE: 3
@@ -245,7 +248,7 @@ jobs:
       - name: Validate Cluster Size
         run: |
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
-          
+
           source ./operator-repo/.github/scripts/cluster-verification.sh
 
           wait_for_last_member_initialization $CLUSTER_SIZE
@@ -277,7 +280,7 @@ jobs:
         working-directory: .
         run: |
           RELEASE_DATE="$(date +%F)T11:59:59Z"
-          
+
           cd rhel-operator-bundle
           mkdir ${OPERATOR_VERSION}
 
@@ -299,12 +302,12 @@ jobs:
           LABEL com.redhat.delivery.operator.bundle=true
           LABEL com.redhat.delivery.backport=true
           EOL
-          
+
           echo "Building the RHEL-bundle image..."
           docker build -t ${RHEL_BUNDLE_IMAGE} -f bundle.Dockerfile .
 
-          
-      - name: Upload Operator-Bundle 
+
+      - name: Upload Operator-Bundle
         uses: actions/upload-artifact@v2
         with:
           name: hz-enterprise-rhel-operator-bundle
@@ -320,7 +323,7 @@ jobs:
           wait_for_container_build_or_scan $TIMEOUT_IN_MINS
           publish_the_image
 
-          
+
       - name: Push Operator-Bundle image to RHEL scan registry
         run: |
           docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_BUNDLE_PASSWORD}
@@ -335,21 +338,17 @@ jobs:
 
           wait_for_container_build_or_scan $TIMEOUT_IN_MINS
           publish_the_image
-          
+
 
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
-          sed -i "0,/tag: .*/s//tag: ${HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-
           sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
 
-          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-rhel.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-rhel.yaml
-        env: 
+          sed -i "s|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:.*|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "s|${REGISTRY_NAME}/management-center-4-rhel8:.*|${REGISTRY_NAME}/management-center-4-rhel8:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+        env:
           REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
 
@@ -360,11 +359,11 @@ jobs:
 
           git config --global user.name 'devOpsHelm'
           git config --global user.email 'devops+1@hazelcast.com'
-          
+
           git checkout -b $BRANCH_NAME
 
           git commit --signoff -am "${OPERATOR_NAME} for RHEL is updated to version: ${OPERATOR_VERSION}. Operator and bundle images are published on RHEL registry."
-          
+
           git push -u origin $BRANCH_NAME
 
 
