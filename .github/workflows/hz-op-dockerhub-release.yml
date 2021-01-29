@@ -292,7 +292,7 @@ jobs:
           sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
           sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
-          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
 
       - name: Commit changes done to Hazelcast-Operator
