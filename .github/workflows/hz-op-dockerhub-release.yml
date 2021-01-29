@@ -338,7 +338,7 @@ jobs:
 
           git add  ./upstream-community-operators/${OPERATOR_NAME}
 
-          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION} - upstream"
 
           git push -u origin ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
@@ -354,13 +354,14 @@ jobs:
           export REPO_OWNER=operator-framework
           export REPO_NAME=community-operators
 
+          git checkout master
           git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./community-operators/${OPERATOR_NAME}/
 
           git add  ./community-operators/${OPERATOR_NAME}
 
-          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION} - community"
 
           git push -u origin ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
 
