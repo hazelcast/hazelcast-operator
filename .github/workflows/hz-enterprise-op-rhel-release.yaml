@@ -68,7 +68,7 @@ jobs:
           set -x
           sudo apt-get update
           sudo apt-get install --only-upgrade libc6
-          oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/opm:. --confirm
+          oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/registry/opm:. --confirm
           chmod +x ./opm
           sudo mv opm /opm
           /opm version
