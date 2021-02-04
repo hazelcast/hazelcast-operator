@@ -358,7 +358,7 @@ jobs:
           BRANCH_NAME=${OPERATOR_NAME}-RHEL-file-updates-${{ github.run_id }}
 
           git config --global user.name 'devOpsHelm'
-          git config --global user.email 'devops+1@hazelcast.com'
+          git config --global user.email 'devopshelm@hazelcast.com'
 
           git checkout -b $BRANCH_NAME
 

@@ -299,7 +299,7 @@ jobs:
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHelm'
-          git config --global user.email 'devops+1@hazelcast.com'
+          git config --global user.email 'devopshelm@hazelcast.com'
 
           git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
