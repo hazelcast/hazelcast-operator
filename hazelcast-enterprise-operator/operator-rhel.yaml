@@ -20,7 +20,7 @@ spec:
       annotations:
         productID: hazelcast-enterprise-operator
         productName: Hazelcast Enterprise Operator
-        productVersion: 0.3.3
+        productVersion: 0.3.4-1
     spec:
       serviceAccountName: hazelcast-enterprise-operator
       securityContext:
@@ -38,7 +38,7 @@ spec:
                 - amd64
       containers:
         - name: hazelcast-enterprise-operator
-          image: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-operator:0.3.3
+          image: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-operator:0.3.4-1
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -54,7 +54,7 @@ spec:
             - name: RELATED_IMAGE_HAZELCAST
               value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8:4.1.1
             - name: RELATED_IMAGE_MANCENTER
-              value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8:4.2020.08-1
+              value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8:4.2020.12-2
           resources:
             limits:
               cpu: "0.1"
