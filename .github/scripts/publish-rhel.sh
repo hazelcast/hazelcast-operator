@@ -66,7 +66,7 @@ publish_the_image()
     # Publish the image
     echo "Publishing the image..."
     RESPONSE=$( \
-    #    curl --silent \
+        curl --silent \
             --request POST \
             --header "Authorization: Bearer ${RHEL_API_KEY}" \
             --header 'Cache-Control: no-cache' \

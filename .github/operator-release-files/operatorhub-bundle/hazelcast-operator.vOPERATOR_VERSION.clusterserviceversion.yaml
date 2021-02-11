@@ -175,14 +175,10 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: hazelcast-operator
-                - name: HAZELCAST_IMAGE_REPOSITORY
-                  value: hazelcast/hazelcast
-                - name: HAZELCAST_IMAGE_TAG
-                  value: HAZELCAST_IMAGE_VERSION
-                - name: MC_IMAGE_REPOSITORY
-                  value: hazelcast/management-center
-                - name: MC_IMAGE_TAG
-                  value: MANCENTER_IMAGE_VERSION
+                - name: RELATED_IMAGE_HAZELCAST
+                  value: hazelcast/hazelcast:HAZELCAST_IMAGE_VERSION
+                - name: RELATED_IMAGE_MANCENTER
+                  value: hazelcast/management-center:MANCENTER_IMAGE_VERSION
                 image: hazelcast/hazelcast-operator:OPERATOR_VERSION
                 imagePullPolicy: Always
                 name: hazelcast-operator
