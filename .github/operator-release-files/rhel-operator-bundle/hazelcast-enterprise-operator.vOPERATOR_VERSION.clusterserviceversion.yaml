@@ -184,14 +184,10 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: hazelcast-enterprise-operator
-                - name: HAZELCAST_IMAGE_REPOSITORY
-                  value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8
-                - name: HAZELCAST_IMAGE_TAG
-                  value: HAZELCAST_IMAGE_VERSION
-                - name: MC_IMAGE_REPOSITORY
-                  value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8
-                - name: MC_IMAGE_TAG
-                  value: MANCENTER_IMAGE_VERSION
+                - name: RELATED_IMAGE_HAZELCAST
+                  value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8:HAZELCAST_IMAGE_VERSION
+                - name: RELATED_IMAGE_MANCENTER
+                  value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8:MANCENTER_IMAGE_VERSION
                 image: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-operator:OPERATOR_VERSION
                 imagePullPolicy: Always
                 name: hazelcast-enterprise-operator
