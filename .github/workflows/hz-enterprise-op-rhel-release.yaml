@@ -28,7 +28,8 @@ on:
         default: '60'
 
 jobs:
-  build:
+  build_publish:
+    name: Build and Publish
     defaults:
       run:
         shell: bash
@@ -374,3 +375,19 @@ jobs:
           gh pr create \
               --title "Update versions after release of RHEL ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on RHEL. New operator and operator-bundle images are released on RHEL registry. "
+
+
+  slack_notify:
+    name: Slack Notify
+    needs: build_publish 
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: 8398a7/action-slack@f3635935f58910a6d6951b73efe9037c960c8c04
+        if: needs.build_publish.result != 'success'
+        with:
+          fields: repo,commit,author,action,eventName,workflow
+          status: ${{ needs.build_publish.result }}
+          channel: '#github-actions-log'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

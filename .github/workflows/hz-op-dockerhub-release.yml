@@ -28,7 +28,8 @@ on:
         default: '4.2020.12'
 
 jobs:
-  build:
+  build_publish:
+    name: Build and Publish
     defaults:
       run:
         shell: bash
@@ -368,3 +369,19 @@ jobs:
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           ../operator-repo/.github/scripts/expect.sh
+
+
+  slack_notify:
+    name: Slack Notify
+    needs: build_publish 
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: 8398a7/action-slack@f3635935f58910a6d6951b73efe9037c960c8c04
+        if: needs.build_publish.result != 'success'
+        with:
+          fields: repo,commit,author,action,eventName,workflow
+          status: ${{ needs.build_publish.result }}
+          channel: '#github-actions-log'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
