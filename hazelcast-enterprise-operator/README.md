@@ -41,11 +41,11 @@ Note: By default the communication is not secured. To enable SSL, read the [Conf
 To create a new project, run the following command.
 
     oc new-project hazelcast-operator
-    
+
 #### Step 1: Create RBAC
 
 Run the following command to configure the Operator permissions.
-   
+
     oc apply -f operator-rbac.yaml
 
 Run the following command to configure the Hazelcast cluster permissions.
@@ -102,6 +102,52 @@ Your Hazelcast Enterprise cluster (together with Management Center) should be cr
 To connect to Management Center, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080/hazelcast-mancenter`. If your OpenShift environment does not have Load Balancer configured, then you can create a route to Management Center with `oc expose`.
 
 ![Management Center](../markdown/management-center.png)
+
+## RedHat Marketplace and Openshift OperatorHub deployment steps
+
+You need to clone this repository before following the next steps.
+
+    git clone https://github.com/hazelcast/hazelcast-operator.git
+    cd hazelcast-operator/hazelcast-enterprise-operator
+
+#### Step 1: Create RBAC for Hazelcast cluster permissions
+
+Run the following command to configure the Hazelcast cluster permissions.
+
+    oc apply -f hazelcast-rbac.yaml
+
+#### Step 2: Create Secret with Hazelcast License Key
+
+Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/get-started/#hazelcast-imdg/).
+
+    $ oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
+
+#### Step 3: Start Hazelcast
+
+Start Hazelcast cluster with the following command.
+
+    $ oc apply -f hazelcast-rhm.yaml
+
+Your Hazelcast Enterprise cluster (together with Management Center) should be created.
+
+    $ oc get pods
+    NAME                                             READY     STATUS    RESTARTS   AGE
+    hazelcast-enterprise-operator-7965b9d785-wst5k   1/1       Running   0          2m39s
+    hz-hazelcast-enterprise-0                        1/1       Running   0          2m6s
+    hz-hazelcast-enterprise-1                        1/1       Running   0          86s
+    hz-hazelcast-enterprise-2                        1/1       Running   0          44s
+    hz-hazelcast-enterprise-mancenter-0              1/1       Running   0          2m6s
+
+If you want modify Hazelcast IMDG configuration, you can check all configuration options in [hazelcast-full.yaml](https://github.com/hazelcast/hazelcast-operator/blob/master/hazelcast-enterprise-operator/hazelcast-full.yaml). Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
+
+#### Step 4: Connect Management Center dashboard
+
+Management Center service can be exposed by creating a route with such command:
+
+    $ oc expose svc/hz-hazelcast-enterprise-mancenter
+
+Then you can reach its dashboard via route URL(HOST/PORT).
+
 
 ## Kubernetes Deployment steps
 
@@ -179,7 +225,7 @@ If you want to modify the Hazelcast or Management Center version, update `RELATE
 
 #### Configuring Hazelcast Cluster
 
-You can check all configuration options in `hazelcast-full.yaml`. Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
+You can check all configuration options in [hazelcast-full.yaml](https://github.com/hazelcast/hazelcast-operator/blob/master/hazelcast-enterprise-operator/hazelcast-full.yaml). Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
 
 #### Configuring SSL
 
@@ -189,7 +235,7 @@ For example, if you use keystore/truststore, then you can import them with the f
 
     $ oc create secret generic keystore --from-file=./keystore --from-file=./truststore
 
-The same command for Kubernetes looks as follows. 
+The same command for Kubernetes looks as follows.
 
     $ kubectl create secret generic keystore --from-file=./keystore --from-file=./truststore
 
@@ -257,9 +303,9 @@ Kubernetes/OpenShift clusters are deployed in many different ways and you may en
 In the sample `hazelcast.yaml`, the name of the Hazelcast cluster is `hz`. If you make this value longer, you may encounter the following error.
 
     oc describe statefulset.apps/my-hazelcast-2esqhajupdg5002uqwgoc8jnj-hazelcast-enterprise
-     
+
     .......Invalid value: "my-hazelcast-2esqhajupdg5002uqwgoc8jnj-hazelcast-enterprise-74cf94b5": must be no more than 63 characters
-    
+
 This is the issue of the Operator itself, so there is not better solution for now than giving your cluster a short name.
 
 #### WriteNotAllowedException in Management Center

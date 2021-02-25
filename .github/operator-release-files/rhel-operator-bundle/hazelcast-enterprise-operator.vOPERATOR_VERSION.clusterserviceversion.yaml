@@ -42,15 +42,9 @@ spec:
   description: |
     Hazelcast IMDG Enterprise is the most widely used in-memory data grid with hundreds of thousands of installed clusters around the world. It offers caching solutions ensuring that data is in the right place when it’s needed for optimal performance.
 
-    ### Before Your Start
-
-    Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/hazelcast-enterprise-download/trial/).
-
-        $ oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
-
     ### Installation Guide & Configuration
 
-    For the complete installation guide and all configuration options please refer to [Hazelcast Operator Documentation](https://github.com/hazelcast/hazelcast-operator).
+    For the complete installation guide and all configuration options please refer to [Hazelcast Operator Documentation](https://github.com/hazelcast/hazelcast-operator/tree/master/hazelcast-enterprise-operator#redhat-marketplace-and-openshift-operatorhub-deployment-steps).
 
   displayName: Hazelcast Enterprise Operator
   icon:
