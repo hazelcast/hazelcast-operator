@@ -187,11 +187,11 @@ jobs:
           sed -i "0,/repository: .*/s||repository: ${RHEL_HAZELCAST_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/repository: /! s|repository: .*|repository: ${RHEL_MANCENTER_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i  "s|image: .*|image: ${RHEL_IMAGE}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i  "s|image: .*|image: ${RHEL_IMAGE}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
+          sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/bundle-rhel.yaml
 
-          sed -i "s|${RHEL_HAZELCAST_REPO}:.*|${RHEL_HAZELCAST_REPO}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
-          sed -i "s|${RHEL_MANCENTER_REPO}:.*|${RHEL_MANCENTER_REPO}:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+          sed -i "s|${RHEL_HAZELCAST_REPO}:.*|${RHEL_HAZELCAST_REPO}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
+          sed -i "s|${RHEL_MANCENTER_REPO}:.*|${RHEL_MANCENTER_REPO}:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
         env:
           RHEL_HAZELCAST_REPO: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8
           RHEL_MANCENTER_REPO: registry.connect.redhat.com/hazelcast/management-center-4-rhel8

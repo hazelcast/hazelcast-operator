@@ -29,9 +29,7 @@ oc create secret docker-registry pull-secret \
  --docker-password=$RED_HAT_PASSWORD \
  --docker-email=$RED_HAT_EMAIL
 
-oc apply -f ${WORKDIR}/operator-rbac.yaml
 oc apply -f ${WORKDIR}/hazelcast-rbac.yaml
-oc apply -f ${WORKDIR}/hazelcastcluster.crd.yaml
 
 oc secrets link hazelcast-enterprise-operator pull-secret --for=pull
 oc apply -f ${WORKDIR}/operator-rhel.yaml
