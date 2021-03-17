@@ -128,15 +128,18 @@ jobs:
         run: |
           if [ "${NAME}" = "hazelcast" ]; then
             KIND=Hazelcast
+            OPERATOR_YAML_NAME=operator
           elif [ "${NAME}" = "hazelcast-enterprise" ]; then
             KIND=HazelcastEnterprise
+            OPERATOR_YAML_NAME=operator-docker-hub
           else
             echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
             exit 1
           fi
           
           echo "KIND=${KIND}" >> $GITHUB_ENV
-
+          echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
+          
 
       - name: Generate Operator and Operator image
         working-directory: ./WORKDIR
@@ -289,6 +292,12 @@ jobs:
 
           sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
           sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
+
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+
+          sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
 
       - name: Commit changes done to Hazelcast-Operator

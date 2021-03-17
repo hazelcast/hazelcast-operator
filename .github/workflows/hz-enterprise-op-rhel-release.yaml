@@ -349,6 +349,12 @@ jobs:
 
           sed -i "s|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:.*|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i "s|${REGISTRY_NAME}/management-center-4-rhel8:.*|${REGISTRY_NAME}/management-center-4-rhel8:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/operator-rhel.yaml
+
+          sed -i  "s|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:.*|image: ${REGISTRY_NAME}/${OPERATOR_NAME}:${OPERATOR_VERSION}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
+          sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/bundle-rhel.yaml
+
+          sed -i "s|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:.*|${REGISTRY_NAME}/hazelcast-enterprise-4-rhel8:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
+          sed -i "s|${REGISTRY_NAME}/management-center-4-rhel8:.*|${REGISTRY_NAME}/management-center-4-rhel8:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/bundle-rhel.yaml
         env:
           REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
