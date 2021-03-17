@@ -29,7 +29,7 @@ oc create secret docker-registry pull-secret \
  --docker-password=$RED_HAT_PASSWORD \
  --docker-email=$RED_HAT_EMAIL
 
-cat <<EOF > ${WORKDIR}/service-account.yaml
+cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -39,8 +39,6 @@ metadata:
     app.kubernetes.io/instance: hazelcast-enterprise-operator
     app.kubernetes.io/managed-by: hazelcast-enterprise-operator
 EOF
-
-oc apply -f ${WORKDIR}/service-account.yaml
 
 oc apply -f ${WORKDIR}/hazelcast-rbac.yaml
 
