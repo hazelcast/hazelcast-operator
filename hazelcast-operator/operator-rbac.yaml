@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - services
+    - endpoints
+    - persistentvolumeclaims
+    - events
+    - configmaps
+    - secrets
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
+    - "extensions"
+    resources:
+    - ingresses
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs:
+    - get
+  - apiGroups:
+    - ""
+    resources:
+    - serviceaccounts
+    verbs:
+    - get
+    - create
+    - list
+    - update
+    - delete
+  - apiGroups:
+    - rbac.authorization.k8s.io
+    resources:
+    - roles
+    - rolebindings
+    verbs:
+    - get
+    - create
+    - list
+    - update
+    - delete
+  - apiGroups:
+    - apps
+    resources:
+    - deployments
+    - daemonsets
+    - replicasets
+    - statefulsets
+    verbs:
+    - '*'
+  - apiGroups:
+    - monitoring.coreos.com
+    resources:
+    - servicemonitors
+    verbs:
+    - get
+    - create
+  - apiGroups:
+    - apps
+    resourceNames:
+    - hazelcast-operator
+    resources:
+    - deployments/finalizers
+    verbs:
+    - update
+  - apiGroups:
+    - hazelcast.com
+    resources:
+    - '*'
+    verbs:
+    - '*'
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hazelcast-operator
+  labels:
+    app.kubernetes.io/name: hazelcast-operator
+    app.kubernetes.io/instance: hazelcast-operator
+    app.kubernetes.io/managed-by: hazelcast-operator
+subjects:
+- kind: ServiceAccount
+  name: hazelcast-operator
+roleRef:
+  kind: ClusterRole
+  name: hazelcast-operator
+  apiGroup: rbac.authorization.k8s.io
