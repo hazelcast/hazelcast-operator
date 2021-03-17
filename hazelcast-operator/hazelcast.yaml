@@ -9,7 +9,7 @@ metadata:
 spec:
   image:
     repository: "hazelcast/hazelcast"
-    tag: 4.1.1
+    tag: 4.1.2
   service:
     create: true
     type: ClusterIP
@@ -36,7 +36,7 @@ spec:
   mancenter:
     image:
       repository: "hazelcast/management-center"
-      tag: 4.2020.12
+      tag: 4.2021.03
     enabled: true
     service:
       type: LoadBalancer
