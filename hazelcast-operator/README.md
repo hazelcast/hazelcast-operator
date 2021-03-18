@@ -100,7 +100,7 @@ Run the following commands to configure the Hazelcast cluster permissions.
 
 #### Step 3: Start Hazelcast
 
-Before starting the cluster, you need to remove the `securityContext` field from `hazelcast.yaml`.
+Before starting the cluster, you need to remove the `securityContext` part from `hazelcast.yaml`.
 
 ```
 ...

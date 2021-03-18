@@ -174,7 +174,7 @@ Insert this value into `secret.yaml`, replace `<base64-hz-license-key>`. Then, c
 
 #### Step 4: Start Hazelcast
 
-Before starting the cluster, you need to remove the `securityContext` field from `hazelcast.yaml`.
+Before starting the cluster, you need to remove the `securityContext` part from `hazelcast.yaml`.
 
 
 ```
