@@ -178,15 +178,10 @@ Before starting the cluster, you need to remove the `securityContext` part from 
 
 
 ```
-...
-      memory: 1024Mi
  securityContext:
     runAsUser: ""
     runAsGroup: ""
     fsGroup: ""
-  mancenter:
-    image:
-...
 ```
 
 After deletion, you can start the Hazelcast cluster with the following command.

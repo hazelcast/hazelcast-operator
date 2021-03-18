@@ -103,15 +103,10 @@ Run the following commands to configure the Hazelcast cluster permissions.
 Before starting the cluster, you need to remove the `securityContext` part from `hazelcast.yaml`.
 
 ```
-...
-      memory: 1024Mi
  securityContext:
     runAsUser: ""
     runAsGroup: ""
     fsGroup: ""
-  mancenter:
-    image:
-...
 ```
 
 After deletion, you can start the Hazelcast cluster with the following command.
