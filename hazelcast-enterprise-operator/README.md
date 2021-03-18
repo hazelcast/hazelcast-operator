@@ -174,7 +174,22 @@ Insert this value into `secret.yaml`, replace `<base64-hz-license-key>`. Then, c
 
 #### Step 4: Start Hazelcast
 
-Start Hazelcast cluster with the following command.
+Before starting the cluster, you need to remove the `securityContext` field from `hazelcast.yaml`.
+
+
+```
+...
+      memory: 1024Mi
+ securityContext:
+    runAsUser: ""
+    runAsGroup: ""
+    fsGroup: ""
+  mancenter:
+    image:
+...
+```
+
+After deletion, you can start the Hazelcast cluster with the following command.
 
     kubectl apply -f hazelcast.yaml
 
