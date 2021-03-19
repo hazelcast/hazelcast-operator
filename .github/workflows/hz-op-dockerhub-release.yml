@@ -327,6 +327,18 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
 
+      - name: Update master branch of the fork
+        working-directory: community-operators
+        run: |
+          git checkout master
+
+          git remote add upstream https://github.com/operator-framework/community-operators.git 
+
+          git pull upstream master 
+
+          git push origin master
+
+
       - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
         working-directory: community-operators
         run: |
