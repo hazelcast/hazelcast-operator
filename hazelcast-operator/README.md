@@ -36,30 +36,21 @@ To create a new project, run the following command.
 
     oc new-project hazelcast-operator
     
-#### Step 1: Create RBAC
+#### Step 1: Deploy Hazelcast Operator
 
-Run the following command to configure the Operator permissions.
-   
-    oc apply -f operator-rbac.yaml
+Run the following command to configure the Hazelcast operator permissions, it will also deploy the operator.
+
+    oc apply -f bundle.yaml
+
+
+#### Step 2: Create RBAC
 
 Run the following command to configure the Hazelcast cluster permissions.
 
     oc apply -f hazelcast-rbac.yaml
 
-#### Step 2: Create CRD (Custom Resource Definition)
 
-To create the Hazelcast resource definition, run the following command.
-
-    oc apply -f hazelcastcluster.crd.yaml
-
-
-#### Step 3: Deploy Hazelcast Operator
-
-Deploy Hazelcast Operator with the following command.
-
-    oc apply -f operator.yaml
-
-#### Step 4: Start Hazelcast
+#### Step 3: Start Hazelcast
 
 Start Hazelcast cluster with the following command.
 
@@ -93,31 +84,32 @@ Note: You need to clone this repository before following the next steps.
     git clone https://github.com/hazelcast/hazelcast-operator.git
     cd hazelcast-operator/hazelcast-operator
 
-#### Step 1: Create RBAC
 
-Run the following commands to configure the Operator permissions.
 
-    kubectl apply -f operator-rbac.yaml
+#### Step 1: Deploy Hazelcast Operator
+
+Deploy Hazelcast Operator with the following command.
+
+    kubectl --validate=false apply -f bundle.yaml
+
+#### Step 2: Create RBAC
 
 Run the following commands to configure the Hazelcast cluster permissions.
 
     kubectl apply -f hazelcast-rbac.yaml
 
-#### Step 2: Create CRD (Custom Resource Definition)
+#### Step 3: Start Hazelcast
 
-To create the Hazelcast resource definition, run the following command.
+Before starting the cluster, you need to remove the `securityContext` part from `hazelcast.yaml`.
 
-    kubectl apply -f hazelcastcluster.crd.yaml
+```
+ securityContext:
+    runAsUser: ""
+    runAsGroup: ""
+    fsGroup: ""
+```
 
-#### Step 3: Deploy Hazelcast Operator
-
-Deploy Hazelcast Operator with the following command.
-
-    kubectl --validate=false apply -f operator.yaml
-
-#### Step 4: Start Hazelcast
-
-Start Hazelcast cluster with the following command.
+After deletion, you can start the Hazelcast cluster with the following command.
 
     kubectl apply -f hazelcast.yaml
 

@@ -136,10 +136,10 @@ jobs:
             echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
             exit 1
           fi
-
+          
           echo "KIND=${KIND}" >> $GITHUB_ENV
           echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
-
+          
 
       - name: Generate Operator and Operator image
         working-directory: ./WORKDIR
@@ -172,12 +172,12 @@ jobs:
           sed -i "0,/tag: .*/s//tag: ${HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
-          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
-          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/bundle.yaml
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/bundle.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/bundle.yaml
 
-          sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
-          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
+          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
 
           #FOR UPLOADING ARTIFACTS
           cp -r ./${OPERATOR_NAME} ./artifact-hazelcast-operator
@@ -201,10 +201,8 @@ jobs:
 
           kind load docker-image ${OPERATOR_IMAGE}
 
-          kubectl apply -f operator-rbac.yaml
           kubectl apply -f hazelcast-rbac.yaml
-          kubectl apply -f hazelcastcluster.crd.yaml
-          kubectl --validate=false apply -f ${OPERATOR_YAML_NAME}.yaml
+          kubectl --validate=false apply -f bundle.yaml
 
           #WAIT FOR OPERATOR TO BE READY
           kubectl wait --for=condition=Ready --timeout=120s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
@@ -288,6 +286,12 @@ jobs:
 
           sed -i "0,/tag: .*/s//tag: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/bundle.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/bundle.yaml
+
+          sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
+          sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/bundle.yaml
 
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
