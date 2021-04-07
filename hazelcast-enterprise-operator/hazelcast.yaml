@@ -9,7 +9,7 @@ metadata:
 spec:
   image:
     repository: "hazelcast/hazelcast-enterprise"
-    tag: 4.1.2
+    tag: 4.2
   service:
     create: true
     type: ClusterIP
