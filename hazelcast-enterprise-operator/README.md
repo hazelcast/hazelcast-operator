@@ -262,7 +262,7 @@ hazelcast:
 
 Then, add this configuration as a ConfigMap.
 
-    $ kubectl create configmap hazelcast-configuration --from-file=hazelcast.yaml
+    $ oc create configmap hazelcast-configuration --from-file=hazelcast.yaml
 
 Or in case of Kubernetes, use the following command.
 
