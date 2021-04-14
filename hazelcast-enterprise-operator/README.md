@@ -230,60 +230,77 @@ The same command for Kubernetes looks as follows.
 
     $ kubectl create secret generic keystore --from-file=./keystore --from-file=./truststore
 
-Instead of manually creating keystore/truststore, you can use [cert-manager](https://cert-manager.io/docs/) to automatically create a secret with related keys (note that dynamic keys update is supported only while using `OpenSSL`, check more [here](https://docs.hazelcast.org/docs/latest/manual/html-single/#integrating-openssl-boringssl)).
+Then, since Kubernetes liveness/readiness probes cannot use SSL, we need to prepare Hazelcast configuration with a separate non-secured port opened for health checks. Create a file `hazelcast.yaml`.
+
+```yaml
+hazelcast:
+  advanced-network:
+    enabled: true
+    join:
+      kubernetes:
+        enabled: true
+        service-name: ${serviceName}
+        service-port: 5702
+        namespace: ${namespace}
+    member-server-socket-endpoint-config:
+      port:
+        port: 5702
+      ssl:
+        enabled: true
+    client-server-socket-endpoint-config:
+      port:
+        port: 5701
+      ssl:
+        enabled: true
+    rest-server-socket-endpoint-config:
+      port:
+        port: 5703
+      endpoint-groups:
+        HEALTH_CHECK:
+          enabled: true
+```
+
+Then, add this configuration as a ConfigMap.
+
+    $ kubectl create configmap hazelcast-configuration --from-file=hazelcast.yaml
+
+Or in case of Kubernetes, use the following command.
+
+    $ kubectl create configmap hazelcast-configuration --from-file=hazelcast.yaml
 
 Then, use the following Hazelcast configuration.
 
-    apiVersion: hazelcast.com/v1alpha1
-    kind: HazelcastEnterprise
-    metadata:
-      name: hz
-    spec:
-    ...
-      secretsMountName: keystore
-      hazelcast:
-        yaml:
-          hazelcast:
-            network:
-              ssl:
-                enabled: true
-                properties:
-                  keyStore: /data/secrets/keystore
-                  keyStorePassword: <keystore_password>
-                  trustStore: /data/secrets/truststore
-                  trustStorePassword: <truststore_password>
-      livenessProbe:
-        scheme: HTTPS
-      readinessProbe:
-        scheme: HTTPS
-      mancenter:
-        ssl: true
-        secretsMountName: keystore
-        yaml:
-          hazelcast-client:
-            network:
-              ssl:
-                enabled: true
-                properties:
-                  keyStore: /secrets/keystore
-                  keyStorePassword: <keystore_password>
-                  trustStore: /secrets/truststore
-                  trustStorePassword: <truststore_password>
-        javaOpts: -Dhazelcast.mc.tls.keyStore=/secrets/keystore -Dhazelcast.mc.tls.keyStorePassword=<keystore_password>
-        service:
-          httpsPort: 8443
-
-Additionally, if you need Mutual Authentication for Management Center, you can add the following parameters to `mancenter.javaOpts`.
-
-```
--Dhazelcast.mc.tls.trustStore=/secrets/truststore -Dhazelcast.mc.tls.trustStorePassword=<truststore_password> -Dhazelcast.mc.tls.mutualAuthentication=REQUIRED
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: HazelcastEnterprise
+metadata:
+  name: hz
+spec:
+...
+  secretsMountName: keystore
+  hazelcast:
+    licenseKeySecretName: hz-license-key
+    javaOpts: '-Djavax.net.ssl.keyStore=/data/secrets/keystore -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=/data/secrets/truststore -Djavax.net.ssl.trustStorePassword=123456'
+    existingConfigMap: hazelcast-configuration
+  livenessProbe:
+    port: 5703
+  readinessProbe:
+    port: 5703
+  mancenter:
+    secretsMountName: keystore
+    yaml:
+      hazelcast-client:
+        network:
+          ssl:
+            enabled: true
+    javaOpts: '-Djavax.net.ssl.keyStore=/secrets/keystore -Djavax.net.ssl.keyStorePassword=123456 -Djavax.net.ssl.trustStore=/secrets/truststore -Djavax.net.ssl.trustStorePassword=123456'
 ```
 
 For more information on Hazelcast Security check the following resources:
 
-* [Hazelcast Reference Manual - Security](https://docs.hazelcast.org/docs/latest/manual/html-single/#security)
+* [Hazelcast Kubernetes SSL Guide](https://guides.hazelcast.org/kubernetes-ssl/)
+* [Hazelcast Reference Manual - Security](https://docs.hazelcast.com/imdg/latest/security/security.html)
 * [Management Center Reference Manual - Security](https://docs.hazelcast.org/docs/management-center/latest/manual/html/index.html#configuring-and-enabling-security)
-* [Hazelcast Code Sample - Hazelcast with SSL on Kubernetes](https://github.com/hazelcast/hazelcast-code-samples/tree/master/hazelcast-integration/kubernetes/samples/ssl)
 
 ## Troubleshooting
 
