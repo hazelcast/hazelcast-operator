@@ -34,7 +34,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v1.3.0"
+      OPERATOR_SDK_VERSION: "v1.7.2"
       KIND: "HazelcastEnterprise"
       NAME: "hazelcast-enterprise"
       REPO: "rhel"
@@ -66,10 +66,10 @@ jobs:
 
       - name: Install opm
         run: |
-          set -x
           sudo apt-get update
           sudo apt-get install --only-upgrade libc6
-          oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/registry/opm:. --confirm
+          wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.7.10/opm-linux-4.7.10.tar.gz
+          tar xvf opm-linux-4.7.10.tar.gz
           chmod +x ./opm
           sudo mv opm /opm
           /opm version
