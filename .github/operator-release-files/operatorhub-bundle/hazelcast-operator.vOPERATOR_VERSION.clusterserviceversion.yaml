@@ -193,7 +193,7 @@ spec:
     type: SingleNamespace
   - supported: false
     type: MultiNamespace
-  - supported: true
+  - supported: false
     type: AllNamespaces
   replaces: hazelcast-operator.vPREVIOUS_OPERATOR_VERSION
   maturity: beta

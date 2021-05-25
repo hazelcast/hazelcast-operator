@@ -41,7 +41,7 @@ Note: By default the communication is not secured. To enable SSL, read the [Conf
 To create a new project, run the following command.
 
     oc new-project hazelcast-operator
-    
+
 #### Step 1: Deploy Hazelcast Operator
 
 Run the following command to configure the Hazelcast operator permissions, it will also deploy the operator.
@@ -94,50 +94,95 @@ To connect to Management Center, you can use `EXTERNAL-IP` and open your browser
 
 ![Management Center](../markdown/management-center.png)
 
-## RedHat Marketplace and Openshift OperatorHub deployment steps
+## RedHat Marketplace Quick Start Guide
 
-You need to clone this repository before following the next steps.
+### Step 1: Prequisities
 
-    git clone https://github.com/hazelcast/hazelcast-operator.git
-    cd hazelcast-operator/hazelcast-enterprise-operator
+You must have the following to install Hazelcast Enterprise IMDG on your Red Hat OpenShift cluster or Trial cluster:
 
-#### Step 1: Create RBAC for Hazelcast cluster permissions
+- [OpenShift CLI](https://docs.openshift.com/container-platform/4.7/cli_reference/openshift_cli/getting-started-cli.html)
+- Project/Namespace to deploy your Hazelcast cluster.
 
-Run the following command to configure the Hazelcast cluster permissions.
+        $ oc new-project <project name>
 
-    oc apply -f hazelcast-rbac.yaml
+### Step 2: Operator Installation from RedHat Marketplace
 
-#### Step 2: Create Secret with Hazelcast License Key
+1. For information on registering your cluster and creating a project/namespace, see [Red Hat Marketplace Docs](https://marketplace.redhat.com/en-us/documentation/clusters). This must be done prior to operator install.
+2. On the main menu, click **Workspace > My Software > Hazelcast IMDG Product > Install Operator**.
+3. On the **Update Channel** section, select an option.
+4. On the **Approval Strategy** section, select either **Automatic or Manual**. The approval strategy corresponds to how you want to process operator upgrades.
+5. On the **Target Cluster** section:
+    - Click the checkbox next to the clusters where you want to install the Operator.
+    - For each cluster you selected, under **Namespace Scope**, on the **Select Scope** list, select an option.
+6. Click **Install**. It may take several minutes for installation to complete.
+7. Once installation is complete, the status will change from **Installing** to **Up to date**.
+8. For further information, see the [Red Hat Marketplace Operator documentation](https://marketplace.redhat.com/en-us/documentation/operators).
 
-Add a Secret within the Project that contains the Hazelcast License Key. If you don't have one, get a trial key from this [link](https://hazelcast.com/get-started/#hazelcast-imdg/).
 
-    $ oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
+### Step 3: Verification of Hazelcast Operator installation
 
-#### Step 3: Start Hazelcast
+1. Once status changes to Up to date, click the vertical ellipses and select Cluster Console.
+2. Open the cluster where you installed the product
+3. Go to **Operators > Installed Operators**
+4. Select the **Namespace** or **Project** you installed on
+5. Verify status for product is **Succeeded**
 
-Start Hazelcast cluster with the following command.
+### Step 4: Hazelcast Enterprise Cluster and Management Center installation
 
-    $ oc apply -f hazelcast-rhm.yaml
+1. Run the following command to configure the Hazelcast cluster permissions.
 
-Your Hazelcast Enterprise cluster (together with Management Center) should be created.
+        $ oc apply -f https://raw.githubusercontent.com/hazelcast/hazelcast-operator/master/hazelcast-enterprise-operator/hazelcast-rbac.yaml
 
-    $ oc get pods
-    NAME                                             READY     STATUS    RESTARTS   AGE
-    hazelcast-enterprise-operator-7965b9d785-wst5k   1/1       Running   0          2m39s
-    hz-hazelcast-enterprise-0                        1/1       Running   0          2m6s
-    hz-hazelcast-enterprise-1                        1/1       Running   0          86s
-    hz-hazelcast-enterprise-2                        1/1       Running   0          44s
-    hz-hazelcast-enterprise-mancenter-0              1/1       Running   0          2m6s
+2. Hazelcast Enterprise license key. If you don't have one, get a trial key from this [link](https://hazelcast.com/get-started/#hazelcast-imdg/). Add a Secret within the Project that contains the Hazelcast License Key:
 
-If you want modify Hazelcast IMDG configuration, you can check all configuration options in [hazelcast-full.yaml](https://github.com/hazelcast/hazelcast-operator/blob/master/hazelcast-enterprise-operator/hazelcast-full.yaml). Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
+        $ oc create secret generic hz-license-key-secret --from-literal=key=LICENSE-KEY-HERE
 
-#### Step 4: Connect Management Center dashboard
+3. Create Hazelcast Enterprise custom resource YAML file with minimal config:
 
-Management Center service can be exposed by creating a route with such command:
+        apiVersion: hazelcast.com/v1alpha1
+        kind: HazelcastEnterprise
+        metadata:
+          name: hz
+          namespace: <project/namespace>
+        spec:
+          hazelcast:
+            licenseKeySecretName: hz-license-key-secret
+          securityContext:
+            runAsUser: ''
+            runAsGroup: ''
+            fsGroup: ''
 
-    $ oc expose svc/hz-hazelcast-enterprise-mancenter
 
-Then you can reach its dashboard via route URL(HOST/PORT).
+    If you want modify Hazelcast Enterprise IMDG configuration, you can check all configuration options in [hazelcast-full.yaml](https://github.com/hazelcast/hazelcast-operator/blob/master/hazelcast-enterprise-operator/hazelcast-full.yaml). Description of all parameters can be found [here](https://github.com/hazelcast/charts/tree/master/stable/hazelcast-enterprise#configuration).
+
+4. Start Hazelcast Enterprise IMDG cluster and Management Center with the following command:
+
+        $ oc apply -f < minimal config yaml >
+
+5. Check the last status of your Hazelcast Enterprise IMDG cluster and Management Center:
+
+        $ oc get pods
+        NAME                                             READY     STATUS    RESTARTS   AGE
+        hazelcast-enterprise-operator-7965b9d785-wst5k   1/1       Running   0          2m39s
+        hz-hazelcast-enterprise-0                        1/1       Running   0          2m6s
+        hz-hazelcast-enterprise-1                        1/1       Running   0          86s
+        hz-hazelcast-enterprise-2                        1/1       Running   0          44s
+        hz-hazelcast-enterprise-mancenter-0              1/1       Running   0          2m6s
+
+6. To connect to Management Center dashboard, you can use `EXTERNAL-IP` and open your browser at: `http://<EXTERNAL-IP>:8080`.
+
+        $ oc get services
+        NAME                                TYPE           EXTERNAL-IP
+        ...
+        hz-hazelcast-enterprise-mancenter   LoadBalancer   ...eu-west-3.elb.amazonaws.com
+
+    ![Management Center](../markdown/management-center.png)
+
+    If your OpenShift environment does not have Load Balancer configured, then you can create a route to Management Center with `oc expose`:
+
+        $ oc expose svc/hz-hazelcast-enterprise-mancenter
+
+    Then you can reach its dashboard via route URL.
 
 
 ## Kubernetes Deployment steps
