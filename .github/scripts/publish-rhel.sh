@@ -64,7 +64,6 @@ wait_for_container_scan()
     for i in `seq 1 ${NOF_RETRIES}`; do
         local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
         local SCAN_STATUS=$(echo "$IMAGE" | jq -r '.data[0].scan_status')
-        echo $SCAN_STATUS
 
         if [ "${SCAN_STATUS}" = "in progress" ] || [ "${SCAN_STATUS}" = "null" ]; then
             echo "Scanning in progress, waiting..."
@@ -91,17 +90,16 @@ publish_the_image()
 
     # New API is using ID instead of PID unlike the previous one
     local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
-    echo 1
+
     local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
     if [ "$IS_PUBLISHED" = "1" ]; then
         echo "Image is already published, exiting"
         return 0
     fi
-    echo 2
+
     local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
     local IMAGE_ID=$(echo "$IMAGE" | jq -r '.data[0]._id')
-    echo $IMAGE_ID
-    echo 3
+
     # Publish the image
     echo "Publishing the image..."
     RESPONSE=$( \
@@ -112,7 +110,7 @@ publish_the_image()
             --header 'Content-Type: application/json' \
             --data "{\"image_id\":\"${IMAGE_ID}\" , \"tag\" : \"${VERSION}\" }" \
             "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/requests/tags")
-    echo $RESPONSE
+
     STATUS=$(echo "${RESPONSE}" | jq -r '.status')
 
     if [ "$STATUS" = "pending" ]; then
