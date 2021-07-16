@@ -1,59 +1,81 @@
 #!/bin/bash
 
-get_containers()
+# We used to give project id in the queries but the new API asks for _ID field of the project.
+get_id_from_pid()
 {
-    PROJECT_ID=$1
-    VERSION=$2
-    RHEL_API_KEY=$3
-
-    RESPONSE=$( \
+    local PROJECT_ID=$1
+    local RHEL_API_KEY=$2
+    
+    local ID=$( \
         curl --silent \
-             --request POST \
-             --header "Content-Type: application/json" \
-             --header "Authorization: Bearer ${RHEL_API_KEY}" \
-             --data {} \
-             "https://connect.redhat.com/api/v2/projects/${PROJECT_ID}/tags?tags=${VERSION}")
+             --request GET \
+             -H "X-API-KEY: ${RHEL_API_KEY}" \
+             "https://catalog.redhat.com/api/containers/v1/projects/certification/pid/${PROJECT_ID}" \
+             | jq -r '._id')
+    
+    echo "$ID"
+}
+
+get_image()
+{
+    local PUBLISHED=$1
+    local ID=$2
+    local VERSION=$3
+    local RHEL_API_KEY=$4
+
+    if [ ${PUBLISHED} = "published" ]; then
+        local PUBLISHED_FILTER="repositories.published==true"
+    elif [ ${PUBLISHED} = "not_published" ]; then
+        local PUBLISHED_FILTER="repositories.published!=true"
+    else
+        echo "Need first parameter as 'published' or 'not_published'." ; return 1
+    fi
+
+    local FILTER="filter=deleted==false;$PUBLISHED_FILTER;repositories.tags.name==${VERSION}"
+    local INCLUDE="include=total,data.repositories.tags.name,data.scan_status,data._id"
+
+    local RESPONSE=$( \
+        curl --silent \
+             --request GET \
+             --header "X-API-KEY: ${RHEL_API_KEY}" \
+             "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/images?$FILTER&$INCLUDE")
 
     echo "${RESPONSE}"
 }
 
-get_container_build()
+wait_for_container_scan()
 {
-    PROJECT_ID=$1
-    VERSION=$2
-    RHEL_API_KEY=$3
+    local PROJECT_ID=$1
+    local VERSION=$2
+    local RHEL_API_KEY=$3
+    local TIMEOUT_IN_MINS=$4
 
-    BUILD=$(get_containers "${PROJECT_ID}" "${VERSION}" "${RHEL_API_KEY}" | jq -r '.tags[0]')
-    if [ "${BUILD}" == "null" ]; then
-        # TAG can be also stored as "${VERSION}, latest"
-        BUILD=$(get_containers "${PROJECT_ID}" "${VERSION}%2C%20latest" "${RHEL_API_KEY}" | jq -r '.tags[0]')
+    # New API is using ID instead of PID unlike the previous one
+    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+
+    local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+    if [ "$IS_PUBLISHED" = "1" ]; then
+        echo "Image is already published, exiting"
+        return 0
     fi
-    echo "${BUILD}"
-}
 
-is_build_valid()
-{
-    BUILD=$1
-
-    echo "${BUILD}" | jq -r '.digest' > /dev/null
-    return $?
-}
-
-
-wait_for_container_build_or_scan()
-{
-    TIMEOUT_IN_MINS=$1
-    NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 2 ))
-    # Wait until the image is built and scanned
+    local NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 2 ))
+    # Wait until the image is scanned
     for i in `seq 1 ${NOF_RETRIES}`; do
-        BUILD=$(get_container_build "${PROJECT_ID}" "${VERSION}" ${RHEL_API_KEY})
-        SCAN_STATUS=$(echo "${BUILD}" | jq -r '.scan_status')
-        DIGEST=$(echo "${BUILD}" | jq -r '.digest')
-        if [ "${SCAN_STATUS}" == "passed" ]; then
-            break
+        local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
+        local SCAN_STATUS=$(echo "$IMAGE" | jq -r '.data[0].scan_status')
+        echo $SCAN_STATUS
+
+        if [ "${SCAN_STATUS}" = "in progress" ] || [ "${SCAN_STATUS}" = "null" ]; then
+            echo "Scanning in progress, waiting..."
+        elif [ "${SCAN_STATUS}" = "passed" ]; then
+            echo "Scan passed!" ; return 0
+        else
+            echo "Scan failed!" ; return 1
         fi
-        echo "Building or scanning in progress, waiting..."
+
         sleep 120
+
         if [ "$i" = "$NOF_RETRIES" ]; then
             echo "Timeout! Scan could not be finished"
             return 42
@@ -63,30 +85,42 @@ wait_for_container_build_or_scan()
 
 publish_the_image()
 {
+    local PROJECT_ID=$1
+    local VERSION=$2
+    local RHEL_API_KEY=$3
+
+    # New API is using ID instead of PID unlike the previous one
+    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+    echo 1
+    local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+    if [ "$IS_PUBLISHED" = "1" ]; then
+        echo "Image is already published, exiting"
+        return 0
+    fi
+    echo 2
+    local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
+    local IMAGE_ID=$(echo "$IMAGE" | jq -r '.data[0]._id')
+    echo $IMAGE_ID
+    echo 3
     # Publish the image
     echo "Publishing the image..."
     RESPONSE=$( \
         curl --silent \
             --request POST \
-            --header "Authorization: Bearer ${RHEL_API_KEY}" \
+            --header "X-API-KEY: ${RHEL_API_KEY}" \
             --header 'Cache-Control: no-cache' \
             --header 'Content-Type: application/json' \
-            --data {} \
-            "https://connect.redhat.com/api/v2/projects/${PROJECT_ID}/containers/${DIGEST}/tags/${VERSION}/publish")
+            --data "{\"image_id\":\"${IMAGE_ID}\" , \"tag\" : \"${VERSION}\" }" \
+            "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/requests/tags")
+    echo $RESPONSE
     STATUS=$(echo "${RESPONSE}" | jq -r '.status')
 
-    # Result message
-    if [ "${STATUS}" == "OK" ]; then
-        echo "Done."
-        return 0
+    if [ "$STATUS" = "pending" ]; then
+        echo "Image publish status is pending!"
+    elif [ "$STATUS" = "success" ]; then
+        echo "Image publish was successful!"
     else
-        ERROR=$(echo "${RESPONSE}" | jq -r '.data.errors[0]')
-        if [[ "${ERROR}" == 'Container image is already published'* ]]; then
-            echo "Image is already published. Skipped."
-            return 0
-        else
-            echo "Error, result message: ${RESPONSE}"
-            return 42
-        fi
+        echo "Image publish was unsuccessful!"
+        return 1
     fi
 }
