@@ -332,16 +332,16 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
 
-      - name: Update master branch of the fork
+      - name: Update main branch of the fork
         working-directory: community-operators
         run: |
-          git checkout master
+          git checkout main
 
           git remote add upstream https://github.com/k8s-operatorhub/community-operators.git
 
-          git pull upstream master 
+          git pull upstream main 
 
-          git push origin master
+          git push origin main
 
 
       - name: Create a PR for Operatorhub-bundle, K8s-operatorhub
@@ -373,16 +373,16 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
 
-      - name: Update master branch of the fork
+      - name: Update main branch of the fork
         working-directory: community-operators-prod
         run: |
-          git checkout master
+          git checkout main
 
           git remote add upstream https://github.com/redhat-openshift-ecosystem/community-operators-prod.git
 
-          git pull upstream master 
+          git pull upstream main 
 
-          git push origin master
+          git push origin main
 
 
       - name: Create a PR for Operatorhub-bundle, redhat-openshift-ecosystem
@@ -392,7 +392,6 @@ jobs:
           export REPO_OWNER=redhat-openshift-ecosystem
           export REPO_NAME=community-operators-prod
 
-          git checkout master
           git checkout -b ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./operators/${OPERATOR_NAME}/
