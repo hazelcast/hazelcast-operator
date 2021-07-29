@@ -344,10 +344,10 @@ jobs:
           git push origin main
 
 
-      - name: Create a PR for Operatorhub-bundle, K8s-operatorhub
+      - name: Create a PR for Operatorhub-bundle, k8s-operatorhub
         working-directory: community-operators
         run: |
-          export REPO_OWNER=K8s-operatorhub
+          export REPO_OWNER=k8s-operatorhub
           export REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
