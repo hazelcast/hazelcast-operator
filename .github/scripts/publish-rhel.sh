@@ -42,7 +42,7 @@ get_image()
     echo "${RESPONSE}"
 }
 
-wait_for_image_scan()
+wait_for_container_scan()
 {
     local PROJECT_ID=$1
     local VERSION=$2
@@ -64,7 +64,7 @@ wait_for_image_scan()
         local IMAGE=$(get_image not_published "${ID}" "${VERSION}" "${RHEL_API_KEY}")
         local SCAN_STATUS=$(echo "$IMAGE" | jq -r '.data[0].scan_status')
 
-        if [[ $SCAN_STATUS == "in progress" ] || [[ $SCAN_STATUS == "null" ]]; then
+        if [[ $SCAN_STATUS == "in progress" ]] || [[ $SCAN_STATUS == "null" ]]; then
             echo "Scanning in progress, waiting..."
         elif [[ $SCAN_STATUS == "passed" ]]; then
             echo "Scan passed!" ; return 0
