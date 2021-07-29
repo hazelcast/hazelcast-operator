@@ -217,7 +217,7 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
+          wait_for_container_scan "$PROJECT_ID" "$VERSION" "$RHEL_API_KEY" "$TIMEOUT_IN_MINS"
 
 
       - name: Deploy Hazelcast Cluster
@@ -321,8 +321,10 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
-          publish_the_image
+          publish_the_image "$PROJECT_ID" "$VERSION" "$RHEL_API_KEY"
+          
+          # We need to wait for operator image publish to be able to push operator bundle image
+          wait_for_container_publish "$PROJECT_ID" "$VERSION" "$RHEL_API_KEY" "$TIMEOUT_IN_MINS"
 
 
       - name: Push Operator-Bundle image to RHEL scan registry
@@ -337,8 +339,9 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
-          publish_the_image
+          wait_for_container_scan "$PROJECT_ID" "$VERSION" "$RHEL_API_KEY" "$TIMEOUT_IN_MINS"
+          publish_the_image "$PROJECT_ID" "$VERSION" "$RHEL_API_KEY"
+
 
 
       - name: Update Hazelcast Versions in the Repo
