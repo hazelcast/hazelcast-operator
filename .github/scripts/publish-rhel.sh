@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# We used to give project id in the queries but the new API asks for _ID field of the project.
 get_id_from_pid()
 {
     local PROJECT_ID=$1
@@ -23,9 +22,9 @@ get_image()
     local VERSION=$3
     local RHEL_API_KEY=$4
 
-    if [ ${PUBLISHED} = "published" ]; then
+    if [[ $PUBLISHED == "published" ]]; then
         local PUBLISHED_FILTER="repositories.published==true"
-    elif [ ${PUBLISHED} = "not_published" ]; then
+    elif [[ $PUBLISHED == "not_published" ]]; then
         local PUBLISHED_FILTER="repositories.published!=true"
     else
         echo "Need first parameter as 'published' or 'not_published'." ; return 1
@@ -50,11 +49,11 @@ wait_for_container_scan()
     local RHEL_API_KEY=$3
     local TIMEOUT_IN_MINS=$4
 
-    # New API is using ID instead of PID unlike the previous one
+    # Get ID of the PID from the API.
     local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
 
     local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
-    if [ "$IS_PUBLISHED" = "1" ]; then
+    if [[ $IS_PUBLISHED == "1" ]]; then
         echo "Image is already published, exiting"
         return 0
     fi
@@ -65,9 +64,9 @@ wait_for_container_scan()
         local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
         local SCAN_STATUS=$(echo "$IMAGE" | jq -r '.data[0].scan_status')
 
-        if [ "${SCAN_STATUS}" = "in progress" ] || [ "${SCAN_STATUS}" = "null" ]; then
+        if [[ $SCAN_STATUS == "in progress" ] || [[ $SCAN_STATUS == "null" ]]; then
             echo "Scanning in progress, waiting..."
-        elif [ "${SCAN_STATUS}" = "passed" ]; then
+        elif [[ $SCAN_STATUS == "passed" ]]; then
             echo "Scan passed!" ; return 0
         else
             echo "Scan failed!" ; return 1
@@ -75,7 +74,7 @@ wait_for_container_scan()
 
         sleep 120
 
-        if [ "$i" = "$NOF_RETRIES" ]; then
+        if [[ $i == $NOF_RETRIES ]]; then
             echo "Timeout! Scan could not be finished"
             return 42
         fi
@@ -88,11 +87,11 @@ publish_the_image()
     local VERSION=$2
     local RHEL_API_KEY=$3
 
-    # New API is using ID instead of PID unlike the previous one
+    # Get ID of the PID from the API.
     local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
 
     local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
-    if [ "$IS_PUBLISHED" = "1" ]; then
+    if [[ $IS_PUBLISHED == "1" ]]; then
         echo "Image is already published, exiting"
         return 0
     fi
@@ -113,9 +112,9 @@ publish_the_image()
 
     STATUS=$(echo "${RESPONSE}" | jq -r '.status')
 
-    if [ "$STATUS" = "pending" ]; then
+    if [[ $STATUS == "pending" ]]; then
         echo "Image publish status is pending!"
-    elif [ "$STATUS" = "success" ]; then
+    elif [[ $STATUS == "completed" ]]; then
         echo "Image publish was successful!"
     else
         echo "Image publish was unsuccessful!"
