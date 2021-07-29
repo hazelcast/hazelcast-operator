@@ -34,7 +34,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v1.7.2"
+      OPERATOR_SDK_VERSION: "v1.10.0"
       KIND: "HazelcastEnterprise"
       NAME: "hazelcast-enterprise"
       REPO: "rhel"
