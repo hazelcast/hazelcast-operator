@@ -12,7 +12,7 @@ get_id_from_pid()
              "https://catalog.redhat.com/api/containers/v1/projects/certification/pid/${PROJECT_ID}" \
              | jq -r '._id')
     
-    echo "$ID"
+    echo "${ID}"
 }
 
 get_image()
@@ -30,14 +30,14 @@ get_image()
         echo "Need first parameter as 'published' or 'not_published'." ; return 1
     fi
 
-    local FILTER="filter=deleted==false;$PUBLISHED_FILTER;repositories.tags.name==${VERSION}"
+    local FILTER="filter=deleted==false;${PUBLISHED_FILTER};repositories.tags.name==${VERSION}"
     local INCLUDE="include=total,data.repositories.tags.name,data.scan_status,data._id"
 
     local RESPONSE=$( \
         curl --silent \
              --request GET \
              --header "X-API-KEY: ${RHEL_API_KEY}" \
-             "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/images?$FILTER&$INCLUDE")
+             "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/images?${FILTER}&${INCLUDE}")
 
     echo "${RESPONSE}"
 }
@@ -50,9 +50,9 @@ wait_for_image_scan()
     local TIMEOUT_IN_MINS=$4
 
     # Get ID of the PID from the API.
-    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+    local ID=$(get_id_from_pid "${PROJECT_ID}" "${RHEL_API_KEY}")
 
-    local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+    local IS_PUBLISHED=$(get_image published "${ID}" "${VERSION}" "${RHEL_API_KEY}" | jq -r '.total')
     if [[ $IS_PUBLISHED == "1" ]]; then
         echo "Image is already published, exiting"
         return 0
@@ -61,7 +61,7 @@ wait_for_image_scan()
     local NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 2 ))
     # Wait until the image is scanned
     for i in `seq 1 ${NOF_RETRIES}`; do
-        local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
+        local IMAGE=$(get_image not_published "${ID}" "${VERSION}" "${RHEL_API_KEY}")
         local SCAN_STATUS=$(echo "$IMAGE" | jq -r '.data[0].scan_status')
 
         if [[ $SCAN_STATUS == "in progress" ] || [[ $SCAN_STATUS == "null" ]]; then
@@ -88,15 +88,15 @@ publish_the_image()
     local RHEL_API_KEY=$3
 
     # Get ID of the PID from the API.
-    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+    local ID=$(get_id_from_pid "${PROJECT_ID}" "${RHEL_API_KEY}")
 
-    local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+    local IS_PUBLISHED=$(get_image published "${ID}" "${VERSION}" "${RHEL_API_KEY}" | jq -r '.total')
     if [[ $IS_PUBLISHED == "1" ]]; then
         echo "Image is already published, exiting"
         return 0
     fi
 
-    local IMAGE=$(get_image not_published "$ID" "$VERSION" "$RHEL_API_KEY")
+    local IMAGE=$(get_image not_published "${ID}" "${VERSION}" "${RHEL_API_KEY}")
     local IMAGE_ID=$(echo "$IMAGE" | jq -r '.data[0]._id')
 
     # Publish the image
@@ -113,7 +113,7 @@ publish_the_image()
     echo "Created a tag request, please check if the image is published."
 }
 
-wait_for_image_publish()
+wait_for_container_publish()
 {
     local PROJECT_ID=$1
     local VERSION=$2
@@ -121,12 +121,12 @@ wait_for_image_publish()
     local TIMEOUT_IN_MINS=$4
 
     # Get ID of the PID from the API.
-    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+    local ID=$(get_id_from_pid "${PROJECT_ID}" "${RHEL_API_KEY}")
 
     local NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 2 ))
     # Wait until the image is published
     for i in `seq 1 ${NOF_RETRIES}`; do
-        local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+        local IS_PUBLISHED=$(get_image published "${ID}" "${VERSION}" "${RHEL_API_KEY}" | jq -r '.total')
 
         if [[ $IS_PUBLISHED == "1" ]]; then
             echo "Image is published, exiting."
