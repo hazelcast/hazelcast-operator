@@ -42,7 +42,7 @@ get_image()
     echo "${RESPONSE}"
 }
 
-wait_for_container_scan()
+wait_for_image_scan()
 {
     local PROJECT_ID=$1
     local VERSION=$2
@@ -109,15 +109,37 @@ publish_the_image()
             --header 'Content-Type: application/json' \
             --data "{\"image_id\":\"${IMAGE_ID}\" , \"tag\" : \"${VERSION}\" }" \
             "https://catalog.redhat.com/api/containers/v1/projects/certification/id/${ID}/requests/tags")
+    
+    echo "Created a tag request, please check if the image is published."
+}
 
-    STATUS=$(echo "${RESPONSE}" | jq -r '.status')
+wait_for_image_publish()
+{
+    local PROJECT_ID=$1
+    local VERSION=$2
+    local RHEL_API_KEY=$3
+    local TIMEOUT_IN_MINS=$4
 
-    if [[ $STATUS == "pending" ]]; then
-        echo "Image publish status is pending!"
-    elif [[ $STATUS == "completed" ]]; then
-        echo "Image publish was successful!"
-    else
-        echo "Image publish was unsuccessful!"
-        return 1
-    fi
+    # Get ID of the PID from the API.
+    local ID=$(get_id_from_pid "$PROJECT_ID" "$RHEL_API_KEY")
+
+    local NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 2 ))
+    # Wait until the image is published
+    for i in `seq 1 ${NOF_RETRIES}`; do
+        local IS_PUBLISHED=$(get_image published "$ID" "$VERSION" "$RHEL_API_KEY" | jq -r '.total')
+
+        if [[ $IS_PUBLISHED == "1" ]]; then
+            echo "Image is published, exiting."
+            return 0
+        else
+            echo "Image is still not published, waiting..."
+        fi
+
+        sleep 120
+
+        if [[ $i == $NOF_RETRIES ]]; then
+            echo "Timeout! Publish could not be finished"
+            return 42
+        fi
+    done
 }
