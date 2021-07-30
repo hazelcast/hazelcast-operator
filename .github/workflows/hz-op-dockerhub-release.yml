@@ -332,56 +332,75 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
 
-      - name: Update master branch of the fork
+      - name: Update main branch of the fork
         working-directory: community-operators
         run: |
-          git checkout master
+          git checkout main
 
-          git remote add upstream https://github.com/operator-framework/community-operators.git 
+          git remote add upstream https://github.com/k8s-operatorhub/community-operators.git
 
-          git pull upstream master 
+          git pull upstream main 
 
-          git push origin master
+          git push origin main
 
 
-      - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
+      - name: Create a PR for Operatorhub-bundle, k8s-operatorhub
         working-directory: community-operators
         run: |
-          export REPO_OWNER=operator-framework
+          export REPO_OWNER=k8s-operatorhub
           export REPO_NAME=community-operators
 
-          git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
+          git checkout -b ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
 
-          cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
+          cp -r ../operatorhub-bundle-output/* ./operators/${OPERATOR_NAME}/
 
-          git add  ./upstream-community-operators/${OPERATOR_NAME}
+          git add  ./operators/${OPERATOR_NAME}
 
-          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION} - upstream"
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
-          git push -u origin ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
+          git push -u origin ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           ../operator-repo/.github/scripts/expect.sh
 
 
-      - name: Create a PR for Operatorhub-bundle, path community-operators
-        if: env.NAME != 'hazelcast-enterprise'
-        working-directory: community-operators
+      - name: Checkout to devOpsHelm/community-operators-prod
+        uses: actions/checkout@v2
+        with:
+          repository: devOpsHelm/community-operators-prod
+          path: community-operators-prod
+          token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
+
+
+      - name: Update main branch of the fork
+        working-directory: community-operators-prod
         run: |
-          export REPO_OWNER=operator-framework
-          export REPO_NAME=community-operators
+          git checkout main
 
-          git checkout master
-          git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+          git remote add upstream https://github.com/redhat-openshift-ecosystem/community-operators-prod.git
 
-          cp -r ../operatorhub-bundle-output/* ./community-operators/${OPERATOR_NAME}/
+          git pull upstream main 
 
-          git add  ./community-operators/${OPERATOR_NAME}
+          git push origin main
 
-          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION} - community"
 
-          git push -u origin ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+      - name: Create a PR for Operatorhub-bundle, redhat-openshift-ecosystem
+        if: env.NAME == 'hazelcast'
+        working-directory: community-operators-prod
+        run: |
+          export REPO_OWNER=redhat-openshift-ecosystem
+          export REPO_NAME=community-operators-prod
+
+          git checkout -b ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          cp -r ../operatorhub-bundle-output/* ./operators/${OPERATOR_NAME}/
+
+          git add  ./operators/${OPERATOR_NAME}
+
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+
+          git push -u origin ${OPERATOR_NAME}-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
