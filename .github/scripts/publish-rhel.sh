@@ -99,6 +99,18 @@ publish_the_image()
     fi
 
     local IMAGE=$(get_image not_published "${ID}" "${VERSION}" "${RHEL_API_KEY}")
+    local IMAGE_EXISTS=$(echo $IMAGE | jq -r '.total')
+    if [[ $IMAGE_EXISTS == "1" ]]; then
+        local SCAN_STATUS=$(echo $IMAGE | jq -r '.data[0].scan_status')
+        if [[ $SCAN_STATUS != "passed" ]]; then
+            echo "Image you are trying to publish did not pass the certification test, its status is \"${SCAN_STATUS}\""
+            return 1
+        fi
+    else
+        echo "Image you are trying to publish does not exist."
+        return 1
+    fi
+
     local IMAGE_ID=$(echo "$IMAGE" | jq -r '.data[0]._id')
 
     # Publish the image
