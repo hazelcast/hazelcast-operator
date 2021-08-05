@@ -34,7 +34,7 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: "v1.7.2"
+      OPERATOR_SDK_VERSION: "v1.10.0"
       NAME: ${{ github.event.inputs.NAME }}
       OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
       PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
