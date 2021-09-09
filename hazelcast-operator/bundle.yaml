@@ -1,5 +1,5 @@
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: hazelcasts.hazelcast.com
@@ -11,13 +11,16 @@ spec:
     plural: hazelcasts
     singular: hazelcast
   scope: Namespaced
-  version: v1alpha1
   versions:
-  - name: v1alpha1
-    served: true
-    storage: true
-  subresources:
-    status: {}
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
 
 ---
 apiVersion: v1
@@ -40,81 +43,81 @@ metadata:
     app.kubernetes.io/managed-by: hazelcast-operator
 rules:
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - pods
-    - services
-    - endpoints
-    - persistentvolumeclaims
-    - events
-    - configmaps
-    - secrets
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
     verbs:
-    - '*'
+      - "*"
   - apiGroups:
-    - ""
-    - "extensions"
+      - ""
+      - "extensions"
     resources:
-    - ingresses
+      - ingresses
     verbs:
-    - '*'
+      - "*"
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - namespaces
+      - namespaces
     verbs:
-    - get
+      - get
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - serviceaccounts
+      - serviceaccounts
     verbs:
-    - get
-    - create
-    - list
-    - update
-    - delete
+      - get
+      - create
+      - list
+      - update
+      - delete
   - apiGroups:
-    - rbac.authorization.k8s.io
+      - rbac.authorization.k8s.io
     resources:
-    - roles
-    - rolebindings
+      - roles
+      - rolebindings
     verbs:
-    - get
-    - create
-    - list
-    - update
-    - delete
+      - get
+      - create
+      - list
+      - update
+      - delete
   - apiGroups:
-    - apps
+      - apps
     resources:
-    - deployments
-    - daemonsets
-    - replicasets
-    - statefulsets
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
     verbs:
-    - '*'
+      - "*"
   - apiGroups:
-    - monitoring.coreos.com
+      - monitoring.coreos.com
     resources:
-    - servicemonitors
+      - servicemonitors
     verbs:
-    - get
-    - create
+      - get
+      - create
   - apiGroups:
-    - apps
+      - apps
     resourceNames:
-    - hazelcast-operator
+      - hazelcast-operator
     resources:
-    - deployments/finalizers
+      - deployments/finalizers
     verbs:
-    - update
+      - update
   - apiGroups:
-    - hazelcast.com
+      - hazelcast.com
     resources:
-    - '*'
+      - "*"
     verbs:
-    - '*'
+      - "*"
 
 ---
 kind: RoleBinding
@@ -126,8 +129,8 @@ metadata:
     app.kubernetes.io/instance: hazelcast-operator
     app.kubernetes.io/managed-by: hazelcast-operator
 subjects:
-- kind: ServiceAccount
-  name: hazelcast-operator
+  - kind: ServiceAccount
+    name: hazelcast-operator
 roleRef:
   kind: ClusterRole
   name: hazelcast-operator
@@ -162,16 +165,16 @@ spec:
       securityContext:
         capabilities:
           drop:
-          - ALL
+            - ALL
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: beta.kubernetes.io/arch
-                operator: In
-                values:
-                - amd64
+              - matchExpressions:
+                  - key: beta.kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
       containers:
         - name: hazelcast-operator
           image: hazelcast/hazelcast-operator:0.3.6
