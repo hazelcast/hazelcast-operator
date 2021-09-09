@@ -3,29 +3,29 @@ on:
   workflow_dispatch:
     inputs:
       NAME:
-        description: 'NAME'
+        description: "NAME"
         required: true
-        default: 'hazelcast-enterprise'
+        default: "hazelcast-enterprise"
       OPERATOR_VERSION:
-        description: 'OPERATOR_VERSION'
+        description: "OPERATOR_VERSION"
         required: true
-        default: '0.3.4'
+        default: "0.3.4"
       PREVIOUS_OPERATOR_VERSION:
-        description: 'PREVIOUS_OPERATOR_VERSION'
+        description: "PREVIOUS_OPERATOR_VERSION"
         required: true
-        default: '0.3.3'
+        default: "0.3.3"
       HELM_CHART_VERSION:
-        description: 'HELM_CHART_VERSION'
+        description: "HELM_CHART_VERSION"
         required: true
-        default: '3.5.2'
+        default: "3.5.2"
       HAZELCAST_VERSION:
-        description: 'HAZELCAST_VERSION'
+        description: "HAZELCAST_VERSION"
         required: true
-        default: '4.1.1'
+        default: "4.1.1"
       MANCENTER_VERSION:
-        description: 'MANCENTER_VERSION'
+        description: "MANCENTER_VERSION"
         required: true
-        default: '4.2020.12'
+        default: "4.2020.12"
 
 jobs:
   build_publish:
@@ -44,7 +44,7 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
-      
+
     runs-on: ubuntu-latest
     steps:
       - name: Install Operator-Sdk
@@ -53,19 +53,16 @@ jobs:
           sudo chmod +x /operator-sdk
           /operator-sdk version
 
-
       - name: Install expect
         run: |
           sudo apt-get update -y
           sudo apt-get install -y expect
           expect -version
 
-
       - name: Checkout to Hazelcast-Operator
         uses: actions/checkout@v2
         with:
           path: operator-repo
-
 
       - name: Download Hazelcast Helm Chart
         run: |
@@ -78,7 +75,6 @@ jobs:
           fi
           tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
           rm ${NAME}-${HELM_CHART_VERSION}.tgz
-
 
       - name: Overwrite Helm-chart template files
         working-directory: ./WORKDIR
@@ -117,13 +113,11 @@ jobs:
           #FOR UPLOADING ARTIFACT
           cp -r ./${NAME} ./artifact-helm-charts
 
-
       - name: Upload updated Helm-Charts
         uses: actions/upload-artifact@v2
         with:
           name: updated-helm-charts
           path: ./WORKDIR/artifact-helm-charts
-
 
       - name: Set KIND and OPERATOR_YAML_NAME as environment variables
         run: |
@@ -137,10 +131,9 @@ jobs:
             echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
             exit 1
           fi
-          
+
           echo "KIND=${KIND}" >> $GITHUB_ENV
           echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
-          
 
       - name: Generate Operator and Operator image
         working-directory: ./WORKDIR
@@ -154,7 +147,7 @@ jobs:
           echo "OPERATOR_IMAGE=${OPERATOR_IMAGE}" >> $GITHUB_ENV
 
           /operator-sdk init --plugins=helm --domain=''
-          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1beta1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
 
           cat >> watches.yaml <<EOL
             overrideValues:
@@ -164,7 +157,6 @@ jobs:
 
           echo "Building the operator image ${OPERATOR_IMAGE}"
           make docker-build  IMG=${OPERATOR_IMAGE}
-
 
       - name: Update Hazelcast-Operator files for testing
         run: |
@@ -189,12 +181,10 @@ jobs:
           name: hazelcast-operator
           path: ./artifact-hazelcast-operator
 
-
       - name: Set up Kubernetes in Docker
         uses: engineerd/setup-kind@v0.5.0
         with:
           version: "v0.11.1"
-
 
       - name: Deploy Hazelcast cluster
         run: |
@@ -216,11 +206,9 @@ jobs:
 
           kubectl apply -f hazelcast.yaml
 
-
       - name: Print log of the Hazelcast-Operator
         run: |
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
-
 
       - name: Validate cluster size
         run: |
@@ -237,11 +225,9 @@ jobs:
 
           verify_management_center $CLUSTER_SIZE
 
-
       - name: Copy Operatorhub bundle from the repo
         run: |
           cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle ./
-
 
       - name: Build Operatorhub bundle
         working-directory: .
@@ -265,19 +251,16 @@ jobs:
           cd ..
           sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
 
-
       - name: Upload Operatorhub bundle
         uses: actions/upload-artifact@v2
         with:
           name: operatorhub-bundle
           path: ./operatorhub-bundle-output
 
-
       - name: Push Hazelcast-Operator to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
           docker push ${OPERATOR_IMAGE}
-
 
       - name: Update Hazelcast versions in the repo Hazelcast-Operator
         working-directory: ./operator-repo
@@ -300,7 +283,6 @@ jobs:
           sed -i "s|hazelcast/${NAME}:.*|hazelcast/${NAME}:${HAZELCAST_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "s|hazelcast/management-center:.*|hazelcast/management-center:${MANCENTER_VERSION}|" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
-
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
@@ -313,7 +295,6 @@ jobs:
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
-
       - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
@@ -323,14 +304,12 @@ jobs:
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
 
-
       - name: Checkout to devOpsHelm/community-operators
         uses: actions/checkout@v2
         with:
           repository: devOpsHelm/community-operators
           path: community-operators
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
-
 
       - name: Update main branch of the fork
         working-directory: community-operators
@@ -342,7 +321,6 @@ jobs:
           git pull upstream main 
 
           git push origin main
-
 
       - name: Create a PR for Operatorhub-bundle, k8s-operatorhub
         working-directory: community-operators
@@ -364,14 +342,12 @@ jobs:
 
           ../operator-repo/.github/scripts/expect.sh
 
-
       - name: Checkout to devOpsHelm/community-operators-prod
         uses: actions/checkout@v2
         with:
           repository: devOpsHelm/community-operators-prod
           path: community-operators-prod
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
-
 
       - name: Update main branch of the fork
         working-directory: community-operators-prod
@@ -383,7 +359,6 @@ jobs:
           git pull upstream main 
 
           git push origin main
-
 
       - name: Create a PR for Operatorhub-bundle, redhat-openshift-ecosystem
         if: env.NAME == 'hazelcast'
@@ -406,10 +381,9 @@ jobs:
 
           ../operator-repo/.github/scripts/expect.sh
 
-
   slack_notify:
     name: Slack Notify
-    needs: build_publish 
+    needs: build_publish
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -418,6 +392,6 @@ jobs:
         with:
           fields: repo,commit,author,action,eventName,workflow
           status: ${{ needs.build_publish.result }}
-          channel: '#github-actions-log'
+          channel: "#github-actions-log"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
