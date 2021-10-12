@@ -162,8 +162,8 @@ jobs:
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i "0,/tag: .*/s//tag: ${HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/bundle.yaml
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/bundle.yaml
@@ -265,8 +265,8 @@ jobs:
       - name: Update Hazelcast versions in the repo Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
-          sed -i "0,/tag: .*/s//tag: ${HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "0,/tag: .*/s//tag: \"${HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: \"${MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
