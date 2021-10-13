@@ -183,9 +183,9 @@ spec:
                 - name: OPERATOR_NAME
                   value: hazelcast-enterprise-operator
                 - name: RELATED_IMAGE_HAZELCAST
-                  value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-4-rhel8:HAZELCAST_IMAGE_VERSION
+                  value: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-5-rhel8:HAZELCAST_IMAGE_VERSION
                 - name: RELATED_IMAGE_MANCENTER
-                  value: registry.connect.redhat.com/hazelcast/management-center-4-rhel8:MANCENTER_IMAGE_VERSION
+                  value: registry.connect.redhat.com/hazelcast/management-center-5-rhel8:MANCENTER_IMAGE_VERSION
                 image: registry.connect.redhat.com/hazelcast/hazelcast-enterprise-operator:OPERATOR_VERSION
                 imagePullPolicy: Always
                 name: hazelcast-enterprise-operator
